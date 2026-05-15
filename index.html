@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pak EduTool — Learn. Grow. Succeed.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* ---- Hero gradient ---- */
+        .hero-gradient {
+            background: linear-gradient(135deg, #0f172a 0%, #0056d2 60%, #1d4ed8 100%);
+        }
+        /* ---- Stat counter items ---- */
+        .stat-item { border-right: 1px solid rgba(255,255,255,0.15); }
+        .stat-item:last-child { border-right: none; }
+        /* ---- Feature card hover ---- */
+        .feature-card { transition: box-shadow 0.2s, transform 0.2s; }
+        .feature-card:hover { box-shadow: 0 12px 32px rgba(0,86,210,0.12); transform: translateY(-4px); }
+        /* ---- Category pill hover ---- */
+        .cat-pill { transition: all 0.18s; }
+        .cat-pill:hover { background: #0056d2; color: #fff; border-color: #0056d2; transform: scale(1.04); }
+        /* ---- Scroll-hide ---- */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* ---- Mobile menu ---- */
+        #mobileMenu { display: none; }
+        #mobileMenu.open { display: block; }
+
+        .search-container {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    height: 50px;
+    padding: 5px;
+    border-radius: 50px;
+    width: 50px; /* Shuru mein sirf icon ka size */
+    transition: width 0.5s ease; /* Smoothly khulne ke liye */
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.search-container.active {
+    width: 300px; 
+}
+
+.search-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    width: 0; /* Shuru mein hidden */
+    padding: 0;
+    font-size: 16px;
+    transition: width 0.5s ease;
+}
+
+.search-container.active .search-input {
+    width: 100%;
+    padding: 0 15px;
+}
+
+.search-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 50%;
+}
+    </style>
+</head>
+<body style="font-family:'Inter',sans-serif; background:#fff; color:#0f172a;">
+
+<!-- ==================== HEADER ==================== -->
+<header id="siteHeader" style="position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #e5e7eb;height:64px;display:flex;align-items:center;">
+    <div class="w-full px-6 flex items-center justify-between" style="max-width:1200px;margin:0 auto;">
+
+        <!-- Logo -->
+        <a href="/" class="pet-logo-text" style="font-size:1.35rem;">🎓 Pak edu<span class="pet-logo-dot">TooL</span></a>
+
+        <!-- Desktop Nav -->
+        <nav class="hidden md:flex items-center gap-8">
+            <div class="search-container" id="searchContainer">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search anything...">
+                <div class="search-icon" id="searchIcon">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+            <a href="#courses"    class="pet-nav-link">Courses</a>
+            <a href="#categories" class="pet-nav-link">Categories</a>
+            <a href="#about"      class="pet-nav-link">About</a>
+        </nav>
+
+        <!-- CTA -->
+        <div class="hidden md:flex items-center gap-3">
+            <a href="src/pages/login.html" class="pet-btn pet-btn-outline pet-btn-sm" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0px 4px 15px rgba(0,0,0,0.1)';"
+            onmouseout="this.style.background ='#1e293b'; ">Sign In</a>
+            <a href="src/pages/register.html" class="pet-btn pet-btn-primary pet-btn-sm">Join Free</a>
+        </div>
+
+        <!-- Mobile hamburger -->
+        <button onclick="document.getElementById('mobileMenu').classList.toggle('open')" class="md:hidden pet-icon-btn">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+    <!-- Mobile Nav -->
+    <div id="mobileMenu" style="position:absolute;top:64px;left:0;right:0;background:#fff;border-bottom:1px solid #e5e7eb;padding:20px 24px;z-index:99;">
+        <nav class="flex flex-col gap-4 mb-5">
+            <a href="#courses"    class="text-sm font-medium text-gray-700">Courses</a>
+            <a href="#categories" class="text-sm font-medium text-gray-700">Categories</a>
+            <a href="#about"      class="text-sm font-medium text-gray-700">About</a>
+        </nav>
+        <div class="flex flex-col gap-3">
+            <a href="/login.html"    class="pet-btn pet-btn-outline pet-btn-full">Sign In</a>
+            <a href="/register.html" class="pet-btn pet-btn-primary pet-btn-full">Join for Free</a>
+        </div>
+    </div>
+</header>
+
+
+<!-- ==================== HERO ==================== -->
+<section class="hero-gradient text-white" style="padding:80px 24px 90px;">
+    <div style="max-width:1200px;margin:0 auto;">``
+        <div class="flex flex-col lg:flex-row items-center gap-12">
+
+            <!-- Left text -->
+            <div class="flex-1 text-center lg:text-left">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6" style="background:rgba(255,255,255,0.12);font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block"></span>
+                    HEC Recognized · PITB Partner · Digital Pakistan
+                </div>
+                <h1 style="font-size:clamp(2rem,5vw,3.5rem);font-weight:900;line-height:1.1;letter-spacing:-1px;margin-bottom:20px;">
+                    Pakistan ka Apna<br>
+                    <span style="color:#fde047;">Premium EdTech</span> Platform
+                </h1>
+                <p style="font-size:1.1rem;line-height:1.75;color:#bfdbfe;max-width:520px;margin: 1px, auto 32px;">
+                    Certified courses in Web Development, Cybersecurity, AI & more — taught by expert instructors, designed for Pakistan's future workforce.
+                </p>
+                <div class="flex flex-wrap gap-3 justify-center lg:justify-start">
+                  <a onclick="window.location.href='src/pages/register.html'" 
+                  onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0px 10px 20px rgba(0,0,0,0.3)'; this.style.background='#ffeb3b';" 
+                  onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'; this.style.background='#fde047';"
+                  class="pet-btn pet-btn-lg" 
+                  style="background:#fde047; color:#0f172a; font-weight:800; border-radius:10px; padding: 15px 40px; font-size: 20px; display: inline-block; text-decoration: none; cursor: pointer; transition: all 0.3s ease;">
+                      Start Learning Free <i class="fas fa-arrow-right ml-2"></i>
+                  </a>
+                    <a href="#courses" class="pet-btn pet-btn-lg" style="background:rgba(255,255,255,0.1);color:#fff;border:1.5px solid rgba(255,255,255,0.25);border-radius:10px; padding: 15px 40px;"
+                    onmouseover="this.style.transform='scale(1.05)'; this.style.background='rgba(255,255,255,0.2)'; this.style.borderColor='rgba(255,255,255,0.5)';" 
+                    onmouseout="this.style.transform='scale(1)';">
+                        Browse Courses
+                    </a>
+                </div>
+            </div>
+
+            <!-- Right: trust card -->
+            <div class="hidden lg:block shrink-0" style="width:340px;">
+                <div style="background:rgba(255,255,255,0.08);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:28px 24px;">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div style="width:44px;height:44px;background:#fde047;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+                            <i class="fas fa-graduation-cap text-xl" style="color:#0f172a;"></i>
+                        </div>
+                        <div>
+                            <p style="font-weight:700;font-size:0.9rem;">Pak eduToll</p>
+                            <p style="font-size:0.72rem;color:#bfdbfe;">Certified Learning Platform</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3 py-2" style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                            <i class="fas fa-check-circle text-green-400 text-sm shrink-0"></i>
+                            <span style="font-size:0.82rem;color:#e2e8f0;">Internationally recognized certificates</span>
+                        </div>
+                        <div class="flex items-center gap-3 py-2" style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                            <i class="fas fa-check-circle text-green-400 text-sm shrink-0"></i>
+                            <span style="font-size:0.82rem;color:#e2e8f0;">Learn in Urdu, Sindhi & English</span>
+                        </div>
+                        <div class="flex items-center gap-3 py-2" style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                            <i class="fas fa-check-circle text-green-400 text-sm shrink-0"></i>
+                            <span style="font-size:0.82rem;color:#e2e8f0;">EasyPaisa / JazzCash payments</span>
+                        </div>
+                        <div class="flex items-center gap-3 py-2">
+                            <i class="fas fa-check-circle text-green-400 text-sm shrink-0"></i>
+                            <span style="font-size:0.82rem;color:#e2e8f0;">100% free courses available</span>
+                        </div>
+                    </div>
+                    <a onclick="window.location.href='src/pages/register.html'" 
+                        onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0px 10px 20px rgba(0,0,0,0.3)'; this.style.                      background='#ffeb3b';" 
+                        onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'; this.style.background='#fde047';"
+                        class="pet-btn pet-btn-lg" 
+                        style="background:#fde047; color:#0f172a; font-weight:800; border-radius:10px; padding: 15px 40px; font-size: 15px; display:                        inline-block; text-decoration: none; cursor: pointer; transition: all 0.3s ease;">
+                        Create Free Account<i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== STATS BAR ==================== -->
+<section style="background:#0056d2; padding: 40px 24px;">
+    <div style="max-width: 1100px; margin: 0 auto;">
+        <div class="flex flex-row flex-wrap items-center justify-around gap-6 text-center">
+            
+            <div class="stat-item">
+                <div style="font-size:2rem; font-weight:900; color:#fff;">5,000+</div>
+                <div style="font-size:0.75rem; color:#bfdbfe; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Learners</div>
+            </div>
+
+            <div class="stat-item">
+                <div style="font-size:2rem; font-weight:900; color:#fff;">50+</div>
+                <div style="font-size:0.75rem; color:#bfdbfe; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Courses</div>
+            </div>
+
+            <div class="stat-item">
+                <div style="font-size:2rem; font-weight:900; color:#fff;">20+</div>
+                <div style="font-size:0.75rem; color:#bfdbfe; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Expert Instructors</div>
+            </div>
+
+            <div class="stat-item">
+                <div style="font-size:2rem; font-weight:900; color:#fff;">HEC</div>
+                <div style="font-size:0.75rem; color:#bfdbfe; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Recognized</div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- ==================== CATEGORIES ==================== -->
+<section id="categories" style="padding:72px 24px; background:#f8f9fa;">
+    <div style="max-width:1200px;margin:0 auto;">
+        <div class="text-center mb-10">
+            <h2 style="font-size:1.9rem;font-weight:800;letter-spacing:-0.5px;color:#0f172a;">Explore by Category</h2>
+            <p style="color:#6b7280;margin-top:8px;font-size:0.95rem;">Pakistan's most in-demand skills, all in one place.</p>
+        </div>
+        <div class="flex flex-wrap justify-center gap-3">
+            <a href="src/pages/student-dashboard.html" class="cat-pill flex items-center gap-2 px-5 py-3 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-700 cursor-pointer">
+                <span>💻</span> Web Development
+            </a>
+            <a href="src/pages/student-dashboard.html" class="cat-pill flex items-center gap-2 px-5 py-3 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-700 cursor-pointer">
+                <span>🛡️</span> Cybersecurity
+            </a>
+            <a href="src/pages/student-dashboard.html" class="cat-pill flex items-center gap-2 px-5 py-3 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-700 cursor-pointer">
+                <span>🤖</span> AI & Machine Learning
+            </a>
+            <a href="src/pages/student-dashboard.html" class="cat-pill flex items-center gap-2 px-5 py-3 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-700 cursor-pointer">
+                <span>📱</span> Mobile Apps
+            </a>
+            <a href="src/pages/student-dashboard.html" class="cat-pill flex items-center gap-2 px-5 py-3 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-700 cursor-pointer">
+                <span>🎨</span> UI/UX Design
+            </a>
+            <a href="src/pages/student-dashboard.html" class="cat-pill flex items-center gap-2 px-5 py-3 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-700 cursor-pointer">
+                <span>📊</span> Data Science
+            </a>
+            <a href="src/pages/student-dashboard.html" class="cat-pill flex items-center gap-2 px-5 py-3 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-700 cursor-pointer">
+                <span>☁️</span> Cloud Computing
+            </a>
+            <a href="src/pages/student-dashboard.html" class="cat-pill flex items-center gap-2 px-5 py-3 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-700 cursor-pointer">
+                <span>📣</span> Digital Marketing
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== FEATURED COURSES ==================== -->
+<section id="courses" style="padding:72px 24px; background:#fff;">
+    <div style="max-width:1200px;margin:0 auto;">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+            <div>
+                <h2 style="font-size:1.9rem;font-weight:800;letter-spacing:-0.5px;color:#0f172a;">Featured Courses</h2>
+                <p style="color:#6b7280;margin-top:6px;font-size:0.95rem;">Hand-picked by our expert instructors for Pakistani learners.</p>
+            </div>
+            <a href="src/pages/student-dashboard.html" class="pet-btn pet-btn-outline pet-btn-sm shrink-0">View All Courses</a>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+
+            <!-- Course Card 1 -->
+            <a href="src/pages/student-dashboard.html" class="pet-course-card block" style="text-decoration:none;">
+                <div style="height:140px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:3rem;">💻</div>
+                <div style="padding:16px;">
+                    <span style="font-size:0.68rem;font-weight:700;color:#0056d2;text-transform:uppercase;letter-spacing:0.05em;">Web Development</span>
+                    <h3 style="font-size:0.9rem;font-weight:600;color:#0f172a;margin:6px 0 4px;line-height:1.4;">React.js Complete Masterclass</h3>
+                    <p style="font-size:0.75rem;color:#6b7280;margin-bottom:12px;">Instructor: Attique Rafeeq</p>
+                    <div class="flex items-center justify-between">
+                        <span style="font-size:0.75rem;color:#f59e0b;font-weight:700;">★★★★★ <span style="color:#9ca3af;">(4.9)</span></span>
+                        <span style="font-size:0.8rem;font-weight:700;color:#16a34a;">Free</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Course Card 2 -->
+            <a href="src/pages/student-dashboard.html" class="pet-course-card block" style="text-decoration:none;">
+                <div style="height:140px;background:#f5f3ff;display:flex;align-items:center;justify-content:center;font-size:3rem;">🛡️</div>
+                <div style="padding:16px;">
+                    <span style="font-size:0.68rem;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:0.05em;">Cybersecurity</span>
+                    <h3 style="font-size:0.9rem;font-weight:600;color:#0f172a;margin:6px 0 4px;line-height:1.4;">Network Security Fundamentals</h3>
+                    <p style="font-size:0.75rem;color:#6b7280;margin-bottom:12px;">Instructor: Attique Rafeeq</p>
+                    <div class="flex items-center justify-between">
+                        <span style="font-size:0.75rem;color:#f59e0b;font-weight:700;">★★★★★ <span style="color:#9ca3af;">(4.8)</span></span>
+                        <span style="font-size:0.8rem;font-weight:700;color:#0f172a;">PKR 999</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Course Card 3 -->
+            <a href="src/pages/student-dashboard.html" class="pet-course-card block" style="text-decoration:none;">
+                <div style="height:140px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;font-size:3rem;">🤖</div>
+                <div style="padding:16px;">
+                    <span style="font-size:0.68rem;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:0.05em;">AI & ML</span>
+                    <h3 style="font-size:0.9rem;font-weight:600;color:#0f172a;margin:6px 0 4px;line-height:1.4;">Introduction to Machine Learning</h3>
+                    <p style="font-size:0.75rem;color:#6b7280;margin-bottom:12px;">Instructor: Attique Rafeeq</p>
+                    <div class="flex items-center justify-between">
+                        <span style="font-size:0.75rem;color:#f59e0b;font-weight:700;">★★★★☆ <span style="color:#9ca3af;">(4.7)</span></span>
+                        <span style="font-size:0.8rem;font-weight:700;color:#16a34a;">Free</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Course Card 4 -->
+            <a href="src/pages/student-dashboard.html" class="pet-course-card block" style="text-decoration:none;">
+                <div style="height:140px;background:#fffbeb;display:flex;align-items:center;justify-content:center;font-size:3rem;">📱</div>
+                <div style="padding:16px;">
+                    <span style="font-size:0.68rem;font-weight:700;color:#d97706;text-transform:uppercase;letter-spacing:0.05em;">Mobile Dev</span>
+                    <h3 style="font-size:0.9rem;font-weight:600;color:#0f172a;margin:6px 0 4px;line-height:1.4;">React Native from Zero to Hero</h3>
+                    <p style="font-size:0.75rem;color:#6b7280;margin-bottom:12px;">Instructor: Attique Rafeeq</p>
+                    <div class="flex items-center justify-between">
+                        <span style="font-size:0.75rem;color:#f59e0b;font-weight:700;">★★★★★ <span style="color:#9ca3af;">(4.9)</span></span>
+                        <span style="font-size:0.8rem;font-weight:700;color:#0f172a;">PKR 1,499</span>
+                    </div>
+                </div>
+            </a>
+
+        </div>
+    </div>
+</section>
+
+<!-- ==================== WHY CHOOSE US ==================== -->
+<section id="about" style="padding:72px 24px; background:#f8f9fa;">
+    <div style="max-width:1200px;margin:0 auto;">
+        <div class="text-center mb-12">
+            <h2 style="font-size:1.9rem;font-weight:800;letter-spacing:-0.5px;color:#0f172a;">Why Pak eduToll?</h2>
+            <p style="color:#6b7280;margin-top:8px;font-size:0.95rem;max-width:500px;margin-left:auto;margin-right:auto;">Built for Pakistan, by Pakistanis — with global standards.</p>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <div class="feature-card bg-white border border-gray-200 rounded-2xl p-6">
+                <div style="width:48px;height:48px;background:#eff6ff;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                    <i class="fas fa-certificate text-lg" style="color:#0056d2;"></i>
+                </div>
+                <h3 style="font-size:1rem;font-weight:700;color:#0f172a;margin-bottom:8px;">Verified Certificates</h3>
+                <p style="font-size:0.85rem;color:#6b7280;line-height:1.7;">Earn certificates recognized by HEC and leading Pakistani organizations upon course completion.</p>
+            </div>
+
+            <div class="feature-card bg-white border border-gray-200 rounded-2xl p-6">
+                <div style="width:48px;height:48px;background:#f0fdf4;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                    <i class="fas fa-wallet text-lg" style="color:#16a34a;"></i>
+                </div>
+                <h3 style="font-size:1rem;font-weight:700;color:#0f172a;margin-bottom:8px;">Pakistani Payment Methods</h3>
+                <p style="font-size:0.85rem;color:#6b7280;line-height:1.7;">Pay easily with EasyPaisa or JazzCash — no international card required. Many courses are completely free.</p>
+            </div>
+
+            <div class="feature-card bg-white border border-gray-200 rounded-2xl p-6">
+                <div style="width:48px;height:48px;background:#f5f3ff;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                    <i class="fas fa-language text-lg" style="color:#7c3aed;"></i>
+                </div>
+                <h3 style="font-size:1rem;font-weight:700;color:#0f172a;margin-bottom:8px;">Multilingual Content</h3>
+                <p style="font-size:0.85rem;color:#6b7280;line-height:1.7;">Courses available in Urdu, Sindhi, and English — making quality education accessible across Pakistan.</p>
+            </div>
+
+            <div class="feature-card bg-white border border-gray-200 rounded-2xl p-6">
+                <div style="width:48px;height:48px;background:#fffbeb;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                    <i class="fas fa-trophy text-lg" style="color:#d97706;"></i>
+                </div>
+                <h3 style="font-size:1rem;font-weight:700;color:#0f172a;margin-bottom:8px;">Gamified Learning</h3>
+                <p style="font-size:0.85rem;color:#6b7280;line-height:1.7;">Earn points, unlock achievements, and climb the leaderboard as you complete quizzes and lessons.</p>
+            </div>
+
+            <div class="feature-card bg-white border border-gray-200 rounded-2xl p-6">
+                <div style="width:48px;height:48px;background:#fdf2f8;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                    <i class="fas fa-chalkboard-teacher text-lg" style="color:#be185d;"></i>
+                </div>
+                <h3 style="font-size:1rem;font-weight:700;color:#0f172a;margin-bottom:8px;">Expert Instructors</h3>
+                <p style="font-size:0.85rem;color:#6b7280;line-height:1.7;">Learn from vetted, HEC-approved instructors with real-world industry experience in their fields.</p>
+            </div>
+
+            <div class="feature-card bg-white border border-gray-200 rounded-2xl p-6">
+                <div style="width:48px;height:48px;background:#f0fdf4;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                    <i class="fas fa-users text-lg" style="color:#16a34a;"></i>
+                </div>
+                <h3 style="font-size:1rem;font-weight:700;color:#0f172a;margin-bottom:8px;">Community Support</h3>
+                <p style="font-size:0.85rem;color:#6b7280;line-height:1.7;">Join thousands of learners in our community forum for peer collaboration, doubt-solving, and networking.</p>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- ==================== CTA BANNER ==================== -->
+<section style="padding:72px 24px; background:linear-gradient(135deg,#0056d2 0%,#1d4ed8 100%); color:#fff;">
+    <div style="max-width:700px;margin:0 auto;text-align:center;">
+        <h2 style="font-size:clamp(1.5rem,4vw,2.4rem);font-weight:900;letter-spacing:-0.5px;margin-bottom:16px;">
+            Apni Career Shuru Karein — Aaj Hi!
+        </h2>
+        <p style="font-size:1rem;color:#bfdbfe;line-height:1.75;margin-bottom:32px;">
+            Pakistan ke hazaron students ke saath shamil hon. Free account banayein aur apna pehla course shuru karein — bilkul free!
+        </p>
+        <div class="flex flex-wrap gap-4 justify-center">
+            <a onclick="window.location.href='src/pages/register.html'" 
+             onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0px 10px 20px rgba(0,0,0,0.3)'; this.style.                 background='#ffeb3b';" 
+            onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'; this.style.background='#fde047';"
+            class="pet-btn pet-btn-lg" 
+            style="background:#fde047; color:#0f172a; font-weight:800; border-radius:10px; padding: 15px 40px; font-size: 20px; display:                    inline-block; text-decoration: none; cursor: pointer; transition: all 0.3s ease;">
+                <i class="fas fa-rocket mr-2"></i> Abhi Join Karein
+            </a>
+            <a href="src/pages/login.html" class="pet-btn pet-btn-lg" style="background:rgba(255,255,255,0.1);color:#fff;border:1.5px solid rgba(255,255,255,0.3);border-radius:10px; padding: 15px 40px;" 
+            onmouseover="this.style.transform='scale(1.05)'; this.style.background='rgba(255,255,255,0.2)'; this.style.borderColor='rgba(255,255,255,0.5)';" 
+            onmouseout="this.style.transform='scale(1)';" >
+                Sign In
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="bg-gray-900 text-white pt-16 pb-8 font-sans">
+    <div class="container mx-auto px-6">
+        <!-- Main Links Grid -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
+            <div>
+                <h3 class="font-bold text-xl mb-6 flex items-center tracking-tight">
+                    <span class="text-2xl mr-2">🎓</span> Pak eduToll
+                </h3>
+                <ul class="space-y-3 text-sm text-gray-400">
+                    <li><a href="#" class="hover:text-blue-400 transition-colors">About Our Vision</a></li>
+                    <li><a href="#" class="hover:text-blue-400 transition-colors">Leadership</a></li>
+                    <li><a href="#" class="hover:text-blue-400 transition-colors">Careers</a></li>
+                    <li><a href="#" class="hover:text-blue-400 transition-colors">Catalog</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="font-bold text-sm uppercase tracking-widest text-gray-200 mb-6">Programs</h3>
+                <ul class="space-y-3 text-sm text-gray-400">
+                    <li><a href="#" class="hover:text-blue-400 transition-colors">Professional Certificates</a></li>
+                    <li><a href="#" class="hover:text-blue-400 transition-colors">MasterTrack® Degrees</a></li>
+                    <li><a href="#" class="hover:text-blue-400 transition-colors">University Degrees</a></li>
+                    <li><a href="#" class="hover:text-blue-400 transition-colors">Enterprise Solutions</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="font-bold text-sm uppercase tracking-widest text-gray-200 mb-6">Partners</h3>
+                <ul class="space-y-3 text-sm text-gray-400">
+                    <li><a href="#" class="hover:text-blue-400 transition-colors">For Government</a></li>
+                    <li><a href="#" class="hover:text-blue-400 transition-colors">For Campus</a></li>
+                    <li><a href="#" class="hover:text-blue-400 transition-colors">Become a Partner</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="font-bold text-sm uppercase tracking-widest text-gray-200 mb-6">Support</h3>
+                <ul class="space-y-3 text-sm text-gray-400">
+                    <li><a href="#" class="hover:text-blue-400 transition-colors">Help Center</a></li>
+                    <li><a href="#" class="hover:text-blue-400 transition-colors">Contact Us</a></li>
+                    <li><a href="#" class="hover:text-blue-400 transition-colors">Accessibility</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="font-bold text-sm uppercase tracking-widest text-gray-200 mb-6">Resources</h3>
+                <ul class="space-y-3 text-sm text-gray-400">
+                    <li><a href="#" class="hover:text-blue-400 transition-colors">Beta Testers</a></li>
+                    <li><a href="#" class="hover:text-blue-400 transition-colors">Tech Blog</a></li>
+                    <li><a href="#" class="hover:text-blue-400 transition-colors">Learner Stories</a></li>
+                </ul>
+            </div>
+        </div>
+
+<!-- Unified Professional Disclaimer Section -->
+<div class="border-t border-gray-800 py-12">
+    <div class="max-w-6xl mx-auto">
+        <!-- Section Header -->
+        <div class="text-center mb-10">
+            <h4 class="text-xs font-black text-gray-500 uppercase tracking-[0.3em] mb-2">Legal Compliance & Code of Ethics</h4>
+            <div class="h-1 w-20 bg-blue-600 mx-auto rounded-full"></div>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-12">
+            
+            <!-- 1. ENGLISH: Global Standards -->
+            <div class="space-y-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    <h5 class="text-blue-400 text-xs font-black uppercase tracking-wider">English Terms</h5>
+                </div>
+                <div class="bg-gray-800/30 p-5 rounded-2xl border border-gray-700/50">
+                    <p class="text-[11px] leading-relaxed text-gray-400 italic mb-3">"Empowering Education through Integrity"</p>
+                    <p class="text-[11px] leading-relaxed text-gray-300">
+                        <b>Academic Integrity:</b> All users (Registration No: A430007) must adhere to the Honor Code. Unauthorized use of AI or external help in quizzes is prohibited. <br><br>
+                        <b>Liability:</b> Pak eduToll and Instructor Attique Rafeeq are not responsible for user-uploaded content accuracy or technical downtime. <br><br>
+                        <b>Certificates:</b> Digital points and leaderboard ranks are motivational tools and do not constitute legal certification without institutional verification.
+                    </p>
+                </div>
+            </div>
+
+            <!-- 2. URDU: Local Compliance -->
+            <div class="space-y-4 text-right" dir="rtl">
+                <div class="flex items-center justify-end gap-2 mb-2">
+                    <h5 class="text-green-400 text-xs font-black uppercase tracking-wider font-urdu">اردو قانونی شرائط</h5>
+                    <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                </div>
+                <div class="bg-gray-800/30 p-5 rounded-2xl border border-gray-700/50">
+                    <p class="text-[12px] leading-relaxed text-gray-400 italic mb-3">"دیانتداری کے ذریعے تعلیمی ترقی"</p>
+                    <p class="text-[13px] leading-relaxed text-gray-300 font-medium">
+                        <b>تعلیمی اخلاقیات:</b> پاک ایڈو ٹول کے تمام صارفین تعلیمی سالمیت برقرار رکھنے کے پابند ہیں۔ کوئز میں نقل یا غیر قانونی امداد اکاؤنٹ کی معطلی کا باعث بن سکتی ہے۔ <br><br>
+                        <b>ذمہ داری:</b> پلیٹ فارم اور انسٹرکٹر عتیق رفیق بیرونی مواد کی درستگی یا فنی خرابی کے ذمہ دار نہیں ہیں۔ <br><br>
+                        <b>تصدیق:</b> پوائنٹس اور رینکنگ صرف حوصلہ افزائی کے لیے ہیں اور باقاعدہ تصدیق کے بغیر سرکاری ڈگری کا درجہ نہیں رکھتے۔
+                    </p>
+                </div>
+            </div>
+
+            <!-- 3. SINDHI: Regional Inclusivity -->
+            <div class="space-y-4 text-right" dir="rtl">
+                <div class="flex items-center justify-end gap-2 mb-2">
+                    <h5 class="text-orange-400 text-xs font-black uppercase tracking-wider">سنڌي قانوني شرطون</h5>
+                    <span class="w-2 h-2 bg-orange-400 rounded-full"></span>
+                </div>
+                <div class="bg-gray-800/30 p-5 rounded-2xl border border-gray-700/50">
+                    <p class="text-[12px] leading-relaxed text-gray-400 italic mb-3">"ديانتداري سان تعليمي واڌارو"</p>
+                    <p class="text-[13px] leading-relaxed text-gray-300 font-medium">
+                        <b>تعليمي اخلاقيات:</b> پاڪ ايڊو ٽول جا سڀ شاگرد تعليمي ايمانداري برقرار رکڻ جا پابند آهن. ڪوئز دوران AI يا ٻاهرين مدد جو استعمال سخت منع آهي۔ <br><br>
+                        <b>ذميواري:</b> پليٽ فارم ۽ انسٽرڪٽر ڪنهن به فني خرابي يا مواد جي غلطي جا ذميوار نه هوندا۔ <br><br>
+                        <b>سند جي حيثيت:</b> ليڊر بورڊ جا پوائنٽس صرف حوصلي افزائي لاءِ آهن ۽ سرڪاري تصديق کان سواءِ سند جي حيثيت نٿا رکن۔
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+        <!-- Social & App Stores -->
+        <div class="flex flex-col md:flex-row justify-between items-center py-8 border-t border-gray-800 gap-6">
+            <div class="flex space-x-6">
+                <a href="#" class="text-gray-500 hover:text-white transition-all transform hover:-translate-y-1"><i class="fab fa-facebook text-xl"></i></a>
+                <a href="#" class="text-gray-500 hover:text-white transition-all transform hover:-translate-y-1"><i class="fab fa-linkedin text-xl"></i></a>
+                <a href="#" class="text-gray-500 hover:text-white transition-all transform hover:-translate-y-1"><i class="fab fa-youtube text-xl"></i></a>
+                <a href="#" class="text-gray-500 hover:text-white transition-all transform hover:-translate-y-1"><i class="fab fa-instagram text-xl"></i></a>
+            </div>
+            <div class="flex space-x-4">
+                <a href="#" class="flex items-center space-x-3 bg-black/50 border border-gray-700 px-5 py-2 rounded-xl hover:bg-gray-800 transition-all">
+                    <i class="fab fa-apple text-2xl"></i>
+                    <div class="text-left"><p class="text-[10px] text-gray-400">Download on</p><p class="text-sm font-bold">App Store</p></div>
+                </a>
+                <a href="#" class="flex items-center space-x-3 bg-black/50 border border-gray-700 px-5 py-2 rounded-xl hover:bg-gray-800 transition-all">
+                    <i class="fab fa-google-play text-xl"></i>
+                    <div class="text-left"><p class="text-[10px] text-gray-400">Get it on</p><p class="text-sm font-bold">Google Play</p></div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Final Bottom Bar -->
+        <div class="text-center pt-8 border-t border-gray-800">
+            <div class="flex justify-center items-center space-x-3 mb-4">
+                <span class="text-2xl">🎓</span>
+                <span class="font-bold text-lg tracking-tight">Pak eduToll</span>
+                <span class="h-4 w-[1px] bg-gray-700"></span>
+                <span class="text-[10px] font-bold text-green-500 border border-green-500/30 px-2 py-0.5 rounded uppercase">Certified B Corp</span>
+            </div>
+            <p class="text-xs text-gray-500">© 2026 Pak eduToll Inc. All rights reserved.</p>
+            <p class="text-[10px] text-gray-600 mt-2 font-medium tracking-wide">
+                HEC Recognized Platform | In Collaboration with PITB & Digital Pakistan Initiative
+            </p>
+        </div>
+    </div>
+</footer>
+<!-- Smooth scroll -->
+<script>
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) { e.preventDefault(); target.scrollIntoView({ behavior:'smooth' }); }
+    });
+});
+window.addEventListener('scroll', () => {
+    const h = document.getElementById('siteHeader');
+    h.style.boxShadow = window.scrollY > 10 ? '0 2px 16px rgba(0,0,0,0.07)' : 'none';
+});
+const searchContainer = document.getElementById('searchContainer');
+const searchIcon = document.getElementById('searchIcon');
+const searchInput = document.getElementById('searchInput');
+
+searchIcon.addEventListener('click', () => {
+    searchContainer.classList.toggle('active');
+
+    if (searchContainer.classList.contains('active')) {
+        searchInput.focus();
+    }
+});
+
+document.addEventListener('click', (e) => {
+    if (!searchContainer.contains(e.target)) {
+        searchContainer.classList.remove('active');
+    }
+});
+</script>
+<script src="/hook/chatboat/chatboat-widget.js"></script>
+</body>
+</html>
