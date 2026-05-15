@@ -33,26 +33,46 @@
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:5000';
         const form = document.getElementById('loginForm');
         const errorDiv = document.getElementById('errorMsg');
+        const loginBtn = form.querySelector('button[type="submit"]');
+
+        function showError(msg) {
+            errorDiv.textContent = msg;
+            errorDiv.classList.remove('hidden');
+            console.error('[Login]', msg);
+        }
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
 
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in…';
+            errorDiv.classList.add('hidden');
+
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 15000);
+
             try {
-                const res = await fetch('https://pak-edutool-production.up.railway.app/api/login', {
+                const res = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify({ email, password }),
+                    signal: controller.signal
                 });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Login failed');
+                clearTimeout(timer);
+
+                let data;
+                try { data = await res.json(); } catch { data = {}; }
+
+                if (!res.ok) throw new Error(data.error || `Server error (${res.status})`);
+
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
-                // Redirect based on role
+                console.log('[Login] Success — role:', data.user.role);
+
                 if (data.user.role === 'admin') {
                     window.location.href = 'admin-dashboard.html';
                 } else if (data.user.role === 'instructor') {
@@ -61,9 +81,13 @@
                     window.location.href = 'student-dashboard.html';
                 }
             } catch (err) {
-                errorDiv.textContent = err.message;
-                errorDiv.classList.remove('hidden');
-                setTimeout(() => errorDiv.classList.add('hidden'), 3000);
+                clearTimeout(timer);
+                const msg = err.name === 'AbortError'
+                    ? 'Request timed out — the server may be starting up. Please try again.'
+                    : err.message || 'Login failed. Check your connection.';
+                showError(msg);
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
             }
         });
     </script>
