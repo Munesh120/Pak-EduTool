@@ -1,0 +1,226 @@
+// ============================================
+// COURSES DATABASE - Coursera Style
+// ============================================
+
+export const coursesData = [
+    {
+        id: 'python-basics',
+        title: 'Python for Everybody',
+        shortTitle: 'Python Programming',
+        instructor: 'Dr. Charles Severance',
+        instructorImage: '👨‍🏫',
+        description: 'Learn Python from scratch and master data structures, web scraping, and automation.',
+        shortDescription: 'Master Python programming from basics to advanced',
+        category: 'Programming',
+        level: 'Beginner',
+        rating: 4.8,
+        reviews: 15234,
+        students: 125000,
+        duration: '40 hours',
+        lectures: 120,
+        price: 0,
+        isFree: true,
+        thumbnail: '🐍',
+        image: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935',
+        tags: ['python', 'programming', 'coding', 'beginner', 'data science'],
+        skills: ['Python', 'Data Structures', 'OOP', 'File Handling'],
+        language: 'English + Urdu',
+        lastUpdated: '2024-01-15'
+    },
+    {
+        id: 'web-dev',
+        title: 'The Complete Web Development Bootcamp',
+        shortTitle: 'Web Development',
+        instructor: 'Dr. Angela Yu',
+        instructorImage: '👩‍🏫',
+        description: 'Become a full-stack web developer. Learn HTML, CSS, JavaScript, React, Node.js, MongoDB.',
+        shortDescription: 'Full-stack web development from zero to hero',
+        category: 'Web Development',
+        level: 'Beginner to Advanced',
+        rating: 4.9,
+        reviews: 21323,
+        students: 213234,
+        duration: '60 hours',
+        lectures: 180,
+        price: 4999,
+        isFree: false,
+        thumbnail: '🌐',
+        image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085',
+        tags: ['web', 'html', 'css', 'javascript', 'react', 'node', 'full-stack'],
+        skills: ['HTML5', 'CSS3', 'JavaScript', 'React', 'Node.js', 'MongoDB'],
+        language: 'English + Urdu',
+        lastUpdated: '2024-01-20'
+    },
+    {
+        id: 'ai-ml',
+        title: 'AI & Machine Learning Specialization',
+        shortTitle: 'AI & Machine Learning',
+        instructor: 'Dr. Andrew Ng',
+        instructorImage: '👨‍🔬',
+        description: 'Master artificial intelligence, neural networks, deep learning, and TensorFlow.',
+        shortDescription: 'Become an AI/ML engineer',
+        category: 'Artificial Intelligence',
+        level: 'Advanced',
+        rating: 4.9,
+        reviews: 8934,
+        students: 78900,
+        duration: '50 hours',
+        lectures: 150,
+        price: 7999,
+        isFree: false,
+        thumbnail: '🤖',
+        image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e',
+        tags: ['ai', 'ml', 'machine learning', 'deep learning', 'tensorflow', 'pytorch'],
+        skills: ['Python', 'TensorFlow', 'PyTorch', 'CNN', 'RNN', 'NLP'],
+        language: 'English',
+        lastUpdated: '2024-01-10'
+    },
+    {
+        id: 'digital-marketing',
+        title: 'Digital Marketing Specialization',
+        shortTitle: 'Digital Marketing',
+        instructor: 'Prof. David Bell',
+        instructorImage: '👨‍💼',
+        description: 'Master SEO, Social Media Marketing, Google Ads, Content Strategy, and Analytics.',
+        shortDescription: 'Become a certified digital marketer',
+        category: 'Marketing',
+        level: 'Beginner',
+        rating: 4.7,
+        reviews: 5678,
+        students: 45600,
+        duration: '30 hours',
+        lectures: 90,
+        price: 3999,
+        isFree: false,
+        thumbnail: '📢',
+        image: 'https://images.unsplash.com/photo-1432888622747-4eb9a8efeb07',
+        tags: ['marketing', 'seo', 'social media', 'google ads', 'analytics'],
+        skills: ['SEO', 'Google Ads', 'Facebook Ads', 'Email Marketing', 'Analytics'],
+        language: 'English + Urdu',
+        lastUpdated: '2024-01-05'
+    },
+    {
+        id: 'data-science',
+        title: 'Data Science Professional Certificate',
+        shortTitle: 'Data Science',
+        instructor: 'Dr. John Hopkins',
+        instructorImage: '👨‍🏫',
+        description: 'Learn pandas, numpy, matplotlib, SQL, and data visualization techniques.',
+        shortDescription: 'Become a data scientist',
+        category: 'Data Science',
+        level: 'Intermediate',
+        rating: 4.8,
+        reviews: 4567,
+        students: 34500,
+        duration: '45 hours',
+        lectures: 135,
+        price: 5999,
+        isFree: false,
+        thumbnail: '📊',
+        image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71',
+        tags: ['data science', 'analytics', 'python', 'pandas', 'sql', 'visualization'],
+        skills: ['Python', 'Pandas', 'NumPy', 'Matplotlib', 'SQL', 'Tableau'],
+        language: 'English',
+        lastUpdated: '2024-01-12'
+    },
+    {
+        id: 'react-mastery',
+        title: 'React - The Complete Guide',
+        shortTitle: 'React Mastery',
+        instructor: 'Maximilian Schwarzmüller',
+        instructorImage: '👨‍💻',
+        description: 'Master React.js including Hooks, Context API, Redux, Next.js, and TypeScript.',
+        shortDescription: 'Build modern web apps with React',
+        category: 'Web Development',
+        level: 'Intermediate',
+        rating: 4.9,
+        reviews: 12345,
+        students: 98700,
+        duration: '48 hours',
+        lectures: 156,
+        price: 4999,
+        isFree: false,
+        thumbnail: '⚛️',
+        image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee',
+        tags: ['react', 'javascript', 'frontend', 'hooks', 'redux', 'nextjs'],
+        skills: ['React', 'Redux', 'Next.js', 'TypeScript', 'Tailwind CSS'],
+        language: 'English',
+        lastUpdated: '2024-01-18'
+    },
+    {
+        id: 'flutter-dev',
+        title: 'Flutter & Dart - Complete Guide',
+        shortTitle: 'Flutter Development',
+        instructor: 'Andrea Bizzotto',
+        instructorImage: '👨‍💻',
+        description: 'Build beautiful iOS and Android apps with Flutter and Dart.',
+        shortDescription: 'Cross-platform mobile development',
+        category: 'Mobile Development',
+        level: 'Beginner',
+        rating: 4.8,
+        reviews: 7890,
+        students: 56700,
+        duration: '42 hours',
+        lectures: 128,
+        price: 3999,
+        isFree: false,
+        thumbnail: '📱',
+        image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c',
+        tags: ['flutter', 'dart', 'mobile', 'android', 'ios', 'cross-platform'],
+        skills: ['Flutter', 'Dart', 'Firebase', 'REST APIs', 'State Management'],
+        language: 'English',
+        lastUpdated: '2024-01-08'
+    },
+    {
+        id: 'cybersecurity',
+        title: 'Cybersecurity Fundamentals',
+        shortTitle: 'Cybersecurity',
+        instructor: 'Prof. John Doe',
+        instructorImage: '👨‍🏫',
+        description: 'Learn network security, ethical hacking, cryptography, and risk management.',
+        shortDescription: 'Protect systems from cyber threats',
+        category: 'Security',
+        level: 'Advanced',
+        rating: 4.9,
+        reviews: 3456,
+        students: 23400,
+        duration: '50 hours',
+        lectures: 145,
+        price: 6999,
+        isFree: false,
+        thumbnail: '🔒',
+        image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3',
+        tags: ['security', 'cybersecurity', 'hacking', 'network', 'encryption'],
+        skills: ['Network Security', 'Ethical Hacking', 'Cryptography', 'Risk Management'],
+        language: 'English',
+        lastUpdated: '2024-01-03'
+    }
+];
+
+export const categories = [
+    'All',
+    'Programming',
+    'Web Development',
+    'Artificial Intelligence',
+    'Data Science',
+    'Marketing',
+    'Mobile Development',
+    'Security'
+];
+
+export const levels = ['All', 'Beginner', 'Intermediate', 'Advanced'];
+
+export const priceTypes = ['All', 'Free', 'Paid'];
+
+// Helper functions
+export function getCourseById(id) {
+    return coursesData.find(course => course.id === id);
+}
+
+export function getPopularCourses() {
+    return [...coursesData].sort((a, b) => b.students - a.students).slice(0, 4);
+}
+
+export function getTopRatedCourses() {
+    return [...coursesData].sort((a, b) => b.rating - a.rating).slice(0, 4);
+}
