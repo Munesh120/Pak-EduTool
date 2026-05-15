@@ -1,0 +1,54 @@
+{
+  "name": "pak-edutool",
+  "version": "1.0.0",
+  "description": "Professional Learning Management System",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js",
+    "test": "cross-env NODE_ENV=test jest --runInBand --verbose",
+    "test:watch": "cross-env NODE_ENV=test jest --watch",
+    "test:coverage": "cross-env NODE_ENV=test jest --coverage",
+    "test:quiz": "cross-env NODE_ENV=test jest --testPathPattern=quiz.test.js"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": [
+      "./server/tests/setup.js"
+    ],
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "server/controllers/**/*.js",
+      "server/models/**/*.js",
+      "!server/models/index.js"
+    ],
+    "verbose": true,
+    "forceExit": true,
+    "detectOpenHandles": true
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.1",
+    "express-validator": "^7.0.1",
+    "jsonwebtoken": "^9.0.3",
+    "lodash.debounce": "^4.0.8",
+    "lucide-react": "^1.11.0",
+    "mongoose": "^7.8.9",
+    "multer": "^2.1.1",
+    "nodemailer": "^6.10.1",
+    "openai": "^6.34.0",
+    "react-icons": "^5.6.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "jest": "^29.7.0",
+    "mongodb-memory-server": "^9.0.0",
+    "nodemon": "^3.0.1",
+    "supertest": "^6.3.3",
+    "tailwindcss": "^4.2.4"
+  }
+}
