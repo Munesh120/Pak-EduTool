@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Player - Pak eduToll</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); }
+        .lesson-active { background: #eff6ff; border-left: 4px solid #2563eb; }
+        .completed-lesson { opacity: 0.7; }
+        .progress-bar { transition: width 0.3s ease; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+        <div class="px-6 py-3 flex justify-between items-center">
+            <a href="index.html" class="text-xl font-bold text-blue-900">🎓 Pak eduToll</a>
+            <div class="flex items-center space-x-4">
+                <span id="userName" class="text-sm text-gray-600"></span>
+                <button onclick="logout()" class="text-red-600 text-sm">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="flex pt-14 h-screen">
+        <!-- Sidebar - Course Content -->
+        <div class="w-96 bg-white border-r overflow-y-auto">
+            <div class="p-4 border-b">
+                <h2 id="courseTitle" class="font-bold text-lg">Loading...</h2>
+                <div class="mt-2 bg-gray-200 rounded-full h-2">
+                    <div id="progressBar" class="gradient-bg h-2 rounded-full progress-bar" style="width: 0%"></div>
+                </div>
+                <p id="progressText" class="text-xs text-gray-500 mt-1">0% Complete</p>
+            </div>
+            <div id="lessonsList" class="divide-y"></div>
+        </div>
+
+        <!-- Main Content - Video + Notes -->
+        <div class="flex-1 overflow-y-auto">
+            <div class="p-6">
+                <!-- Video Player -->
+                <div class="bg-black rounded-lg aspect-video flex items-center justify-center">
+                    <div class="text-center text-white">
+                        <div class="text-6xl mb-4">🎬</div>
+                        <p class="text-xl">Video Player</p>
+                        <p class="text-sm text-gray-400 mt-2">Select a lesson to start learning</p>
+                        <div class="mt-4 flex justify-center space-x-4">
+                            <button class="bg-blue-600 px-4 py-2 rounded-lg text-sm">Play Video</button>
+                            <button class="bg-gray-600 px-4 py-2 rounded-lg text-sm">Download Resources</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lesson Content -->
+                <div id="lessonContent" class="mt-6 bg-white rounded-lg p-6">
+                    <h2 id="lessonTitle" class="text-2xl font-bold mb-4">Welcome to the Course!</h2>
+                    <p class="text-gray-600">Select a lesson from the sidebar to begin your learning journey.</p>
+                    
+                    <!-- Notes Section -->
+                    <div class="mt-6 p-4 bg-yellow-50 rounded-lg">
+                        <h3 class="font-bold text-yellow-800">📝 Lecture Notes</h3>
+                        <p class="text-sm text-yellow-700 mt-2">Notes will appear here when you select a lesson...</p>
+                    </div>
+                    
+                    <!-- Quiz Section -->
+                    <div class="mt-4 p-4 bg-purple-50 rounded-lg">
+                        <h3 class="font-bold text-purple-800">📋 Module Quiz</h3>
+                        <p class="text-sm text-purple-700 mt-2">Quiz will be available after completing all lessons...</p>
+                        <button class="mt-3 bg-purple-600 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50" disabled>Locked 🔒</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/course/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseId = urlParams.get('course');
+        const course = getCourseById(courseId);
+        const user = JSON.parse(localStorage.getItem('pakEdutollUser') || '{}');
+        
+        // Check if enrolled
+        const isEnrolled = user.enrolledCourses?.includes(courseId);
+        if (!isEnrolled && course?.type === 'paid') {
+            alert('Please purchase this course first!');
+            window.location.href = `course-detail.html?id=${courseId}`;
+        }
+        
+        document.getElementById('userName').textContent = user.name || 'Student';
+        document.getElementById('courseTitle').textContent = course?.title || 'Course';
+        
+        // Mock lessons
+        function renderLessons() {
+            const container = document.getElementById('lessonsList');
+            if (!course) return;
+            
+            let lessons = [];
+            course.syllabus.forEach((module, mIdx) => {
+                module.lessons.forEach((lesson, lIdx) => {
+                    lessons.push({
+                        id: `${mIdx}-${lIdx}`,
+                        title: lesson,
+                        module: module.module,
+                        completed: false
+                    });
+                });
+            });
+            
+            container.innerHTML = lessons.map((lesson, idx) => `
+                <div class="lesson-item p-3 cursor-pointer hover:bg-gray-50 ${idx === 0 ? 'lesson-active' : ''}" onclick="loadLesson(${idx}, '${lesson.title}')">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-gray-400">📹</span>
+                            <div>
+                                <p class="text-sm font-medium">${lesson.title}</p>
+                                <p class="text-xs text-gray-500">${lesson.module}</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-gray-400">10 min</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function loadLesson(index, title) {
+            document.getElementById('lessonTitle').textContent = title;
+            document.getElementById('lessonContent').innerHTML = `
+                <h2 class="text-2xl font-bold mb-4">${title}</h2>
+                <div class="aspect-video bg-gray-900 rounded-lg flex items-center justify-center mb-6">
+                    <div class="text-center text-white">
+                        <div class="text-6xl mb-4">🎥</div>
+                        <p>Video content would play here</p>
+                        <button class="mt-4 bg-blue-600 px-6 py-2 rounded-lg">▶ Play Video</button>
+                    </div>
+                </div>
+                <div class="prose max-w-none">
+                    <h3 class="font-bold text-lg mb-2">📝 Lesson Notes</h3>
+                    <p class="text-gray-700">This is where detailed lesson notes and transcript would appear. Students can take notes and review the material.</p>
+                    <div class="mt-4 p-4 bg-green-50 rounded-lg">
+                        <p class="text-sm text-green-800">💡 Key takeaways from this lesson...</p>
+                        <ul class="list-disc list-inside mt-2 text-sm text-green-700">
+                            <li>Important concept 1</li>
+                            <li>Important concept 2</li>
+                            <li>Important concept 3</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-between items-center">
+                    <button class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                        ✓ Mark as Complete
+                    </button>
+                    <button class="text-gray-500 text-sm">Download Resources ↓</button>
+                </div>
+            `;
+        }
+        
+        function logout() {
+            localStorage.removeItem('pakEdutollUser');
+            window.location.href = '../index.html';
+        }
+        
+        renderLessons();
+    </script>
+</body>
+</html>

@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Pak eduTool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); }
+        .course-card { transition: all 0.3s ease; }
+        .course-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -12px rgba(0,0,0,0.2); }
+        .enrolled-badge { background: #10b981; color: white; font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; display: inline-block; }
+        .module-header { cursor: pointer; transition: background 0.2s; }
+        .module-header:hover { background: #f9fafb; }
+        .item-icon { width: 28px; text-align: center; }
+        .collapsible-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .collapsible-content.open { max-height: 2000px; transition: max-height 0.5s ease-in; }
+        .duration-text { font-size: 0.7rem; color: #6b7280; white-space: nowrap; }
+        .quiz-option { margin-bottom: 8px; }
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; }
+        .video-container video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .transcription-box { max-height: 200px; overflow-y: auto; background: #f9fafb; padding: 10px; border-radius: 8px; margin-top: 10px; }
+        #certificate-template-wrapper { position: absolute; left: -9999px; top: 0; }
+        .cert-container { width: 800px; height: 600px; background: white; border: 15px solid #1e3c72; padding: 50px; text-align: center; position: relative; }
+        @keyframes gradient-xy { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        .animate-gradient-xy { background-size: 400% 400%; animation: gradient-xy 15s ease infinite; }
+        #welcomeName { text-shadow: 0 2px 10px rgba(253, 224, 71, 0.3); }
+        .recommendation-card { transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); height: 100%; display: flex; flex-direction: column; }
+        @media (min-width: 1280px) { .recommendation-card { min-height: 420px; } }
+        @keyframes pulse-subtle { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.01); } }
+        .animate-pulse-subtle { animation: pulse-subtle 3s infinite ease-in-out; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .category-btn { padding: 0.625rem 1.25rem; border-radius: 1rem; font-size: 0.875rem; font-weight: 600; white-space: nowrap; transition: all 0.3s ease; border-width: 1px; border-style: solid; display: inline-flex; align-items: center; justify-content: center; }
+        .active-filter { background-color: #2563eb; color: #ffffff; border-color: #2563eb; box-shadow: 0 10px 15px -3px rgba(37,99,235,0.4); transform: scale(1.05); }
+        .inactive-filter { background-color: #ffffff; color: #4b5563; border-color: #f3f4f6; }
+        .inactive-filter:hover { border-color: #bfdbfe; background-color: #eff6ff; }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+    <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+        <div class="flex items-center space-x-4">
+            <button onclick="toggleSidebar()" class="text-gray-600 hover:text-black-900 focus:outline-none transition-colors">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl">🎓</span>
+                <span class="text-xl font-bold text-blue-900 uppercase tracking-tight">Pak eduTool</span>
+            </div>
+        </div>
+        <div class="flex-1 max-w-md mx-10 relative hidden md:block">
+            <div class="relative">
+                <input type="text" id="courseSearchInput" placeholder="Search courses..." class="w-full bg-gray-100 border border-transparent focus:bg-white focus:border-blue-500 rounded-full py-2 px-10 outline-none transition-all" onkeyup="handleSearch(this.value)">
+                <i class="fas fa-search absolute left-4 top-3 text-gray-400"></i>
+            </div>
+            <div id="searchResultsDropdown" class="absolute top-full left-0 w-full bg-white shadow-xl rounded-lg mt-2 hidden border border-gray-100 overflow-hidden z-50"></div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <i class="fas fa-bell text-gray-500 cursor-pointer hover:text-blue-600"></i>
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="toggleProfileMenu()">
+                <div class="w-8 h-8 gradient-bg rounded-full flex items-center justify-center text-white text-sm" id="userAvatar">👤</div>
+                <span class="text-sm text-gray-700 hidden md:inline" id="userName">Student</span>
+                <i class="fas fa-chevron-down text-xs text-gray-500"></i>
+                <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <span id="darkIcon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="flex pt-16">
+    <aside id="sidebarMenu" class="fixed left-0 top-0 pt-16 h-full bg-white border-r z-50 transform -translate-x-full transition-transform duration-300 ease-in-out w-64 shadow-2xl">
+        <div class="p-6">
+            <div class="flex items-center space-x-3 mb-8 pb-4 border-b">
+                <div class="w-12 h-12 gradient-bg rounded-full flex items-center justify-center text-xl text-white" id="sidebarAvatar">👤</div>
+                <div>
+                    <p class="font-bold text-gray-800" id="sidebarName">Munesh</p> 
+                    <p class="text-xs text-gray-500">Student</p>
+                </div>
+            </div>
+            <nav class="space-y-1">
+                <a href="#" onclick="showSection('dashboard', this, event)" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 bg-blue-50 text-blue-600"><i class="fas fa-tachometer-alt w-5"></i> <span>Dashboard</span></a>
+                <a href="#" onclick="showSection('learning', this, event)" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"><i class="fas fa-book-open w-5"></i> <span>My Learning</span></a>
+                <a href="#" onclick="showSection('certificates', this, event)" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"><i class="fas fa-certificate w-5"></i> <span>Certificates</span></a>
+                <a href="#" onclick="logout()" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 mt-4"><i class="fas fa-sign-out-alt w-5"></i> <span>Logout</span></a>
+            </nav>
+        </div>
+    </aside>
+
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 hidden transition-opacity duration-300" onclick="toggleSidebar()"></div>
+
+    <main class="flex-1 p-4 md:p-6 transition-all duration-300">
+        <div class="relative overflow-hidden rounded-3xl mb-10 shadow-2xl group">
+            <div class="absolute inset-0 bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 animate-gradient-xy"></div>
+            <div class="absolute top-[-10%] right-[-5%] w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-[-20%] left-[-10%] w-96 h-96 bg-blue-400/20 rounded-full blur-3xl"></div>
+            <div class="relative z-10 p-8 md:p-12 text-white">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-8">
+                    <div class="text-center md:text-left flex-1">
+                        <div class="inline-block px-4 py-1 rounded-full bg-white/20 text-xs font-semibold tracking-widest uppercase mb-4 backdrop-blur-md">Student Dashboard</div>
+                        <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight mb-3">Welcome back, <span id="welcomeName" class="text-yellow-300">Munesh</span>! 👋</h1>
+                        <p class="text-lg md:text-xl text-blue-100 max-w-2xl leading-relaxed">Aapka safar jaari hai. Aaj kuch naya seekhein aur apni <span class="font-bold text-yellow-300 underline decoration-yellow-400">Skills</span> ko behtar banayein.</p>
+                    </div>
+                    <div id="achievementBar" class="hidden max-w-full mx-auto mb-6">
+                        <div class="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-pulse-subtle">
+                            <div class="flex items-center gap-4">
+                                <div class="flex-shrink-0 w-12 h-12 bg-yellow-400 rounded-xl flex items-center justify-center text-2xl shadow-lg shadow-yellow-200">🏆</div>
+                                <div><h4 class="text-sm font-black text-yellow-900 leading-tight">New Achievement Unlocked!</h4><p id="achievementText" class="text-xs text-yellow-800 mt-0.5"></p></div>
+                            </div>
+                            <button onclick="closeAchievement()" class="text-yellow-900/50 hover:text-yellow-900 p-2"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-10">
+            <div class="flex items-center gap-2 mb-4"><span class="text-sm font-bold text-gray-400 uppercase tracking-widest">Quick Actions</span><div class="h-[1px] bg-gray-100 flex-1"></div></div>
+            <div class="flex md:grid md:grid-cols-4 overflow-x-auto pb-4 md:pb-0 gap-4 no-scrollbar scroll-smooth">
+                <button class="min-w-[160px] flex flex-col items-center justify-center p-4 bg-blue-50 rounded-2xl border-2 border-blue-100 hover:border-blue-500 hover:bg-blue-100 transition-all group"><div class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform"><i class="fas fa-play"></i></div><span class="text-sm font-bold text-blue-900">Resume Lesson</span><span class="text-[10px] text-blue-600/70 font-medium">React Basics • 12:04</span></button>
+                <button class="min-w-[160px] flex flex-col items-center justify-center p-4 bg-purple-50 rounded-2xl border-2 border-purple-100 hover:border-purple-500 hover:bg-purple-100 transition-all group"><div class="w-12 h-12 bg-purple-600 text-white rounded-full flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform"><i class="fas fa-certificate"></i></div><span class="text-sm font-bold text-purple-900">Get Certificate</span><span class="text-[10px] text-purple-600/70 font-medium">1 Course Ready</span></button>
+                <button class="min-w-[160px] flex flex-col items-center justify-center p-4 bg-green-50 rounded-2xl border-2 border-green-100 hover:border-green-500 hover:bg-green-100 transition-all group"><div class="w-12 h-12 bg-green-600 text-white rounded-full flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform"><i class="fas fa-users"></i></div><span class="text-sm font-bold text-green-900">Community</span><span class="text-[10px] text-green-600/70 font-medium">Join Group Chat</span></button>
+                <a href="discussion-form.html" class="min-w-[160px] flex flex-col items-center justify-center p-4 bg-amber-50 rounded-2xl border-2 border-amber-100 hover:border-amber-500 hover:bg-amber-100 transition-all group"><div class="w-12 h-12 bg-amber-600 text-white rounded-full flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform"><i class="fas fa-question-circle"></i></div><span class="text-sm font-bold text-amber-900">Ask a Doubt</span><span class="text-[10px] text-amber-600/70 font-medium">24/7 Expert Support</span></a>
+            </div>
+        </div>
+
+        <!-- Daily Study Goal Card - Dynamic Name -->
+        <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 mb-8 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <div><h3 class="text-lg font-bold text-gray-800">Daily Study Goal</h3><p class="text-xs text-gray-500" id="dailyGoalMomentum">Keep up the momentum, Munesh!</p></div>
+                <div class="bg-green-100 text-green-600 p-2 rounded-lg text-sm font-bold">60% Done</div>
+            </div>
+            <div class="flex justify-between items-end mb-2"><p class="text-sm font-medium text-gray-700"><span class="text-blue-600 font-bold text-xl">3</span>/5 Lessons</p><p class="text-xs text-gray-400 font-medium italic">2 more to reach today's goal!</p></div>
+            <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden"><div class="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all duration-1000 ease-out" style="width: 60%"></div></div>
+            <div class="mt-4 flex items-center gap-2"><span class="flex h-2 w-2 rounded-full bg-green-500 animate-ping"></span><span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Active Now: 1,240 students studying</span></div>
+        </div>
+
+        <!-- Upcoming Deadline Card - Dynamic Quiz / Final Exam -->
+        <div id="upcomingDeadlineCard" class="mb-8 flex items-center p-4 text-amber-800 rounded-2xl bg-amber-50 border border-amber-200 shadow-sm animate-pulse cursor-pointer" onclick="openDynamicQuiz()">
+            <span class="text-xl mr-3">⏰</span>
+            <div class="flex-1">
+                <h3 class="font-bold text-sm md:text-base" id="deadlineTitle">Upcoming Deadline: Loading...</h3>
+                <p class="text-xs opacity-90" id="deadlineDesc">Loading your enrolled courses...</p>
+            </div>
+            <button id="deadlineActionBtn" class="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-amber-700 transition-colors">Take Now</button>
+        </div>
+
+        <div class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><span>📚</span> All Published Courses</h2>
+            <div class="mb-8 overflow-hidden">
+                <div class="flex items-center gap-2 mb-3"><span class="text-sm font-bold text-gray-400 uppercase tracking-wider">Explore Categories</span><div class="h-[1px] bg-gray-100 flex-1"></div></div>
+                <div class="flex overflow-x-auto pb-4 gap-3 no-scrollbar scroll-smooth">
+                    <button onclick="filterCourses('all', this)" class="category-btn active-filter">All Courses</button>
+                    <button onclick="filterCourses('web', this)" class="category-btn inactive-filter">Web Development</button>
+                    <button onclick="filterCourses('cyber', this)" class="category-btn inactive-filter">Cybersecurity</button>
+                    <button onclick="filterCourses('ai', this)" class="category-btn inactive-filter">AI & ML</button>
+                    <button onclick="filterCourses('mobile', this)" class="category-btn inactive-filter">Mobile Apps</button>
+                    <button onclick="filterCourses('uiux', this)" class="category-btn inactive-filter">UI/UX Design</button>
+                    <button onclick="filterCourses('db', this)" class="category-btn inactive-filter">Database Management</button>
+                    <button onclick="filterCourses('cloud', this)" class="category-btn inactive-filter">Cloud Computing</button>
+                    <button onclick="filterCourses('data', this)" class="category-btn inactive-filter">Data Science</button>
+                    <button onclick="filterCourses('marketing', this)" class="category-btn inactive-filter">Digital Marketing</button>
+                </div>
+            </div>
+            <div id="coursesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-gray-200 animate-pulse rounded-xl h-64 w-full"><div class="h-32 bg-gray-300 rounded-t-xl"></div><div class="p-4 space-y-3"><div class="h-4 bg-gray-300 rounded w-3/4"></div><div class="h-3 bg-gray-300 rounded w-1/2"></div><div class="h-8 bg-gray-300 rounded mt-4"></div></div></div>
+            </div>
+        </div>
+
+        <section class="mt-16 mb-12 px-4 md:px-0">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                <div><h2 class="text-2xl md:text-3xl font-black text-gray-800 flex items-center gap-3"><span class="flex h-10 w-10 items-center justify-center bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200"><i class="fas fa-magic text-sm"></i></span>Recommended for You</h2><p class="text-gray-500 text-sm mt-2">Based on your interest in <span class="font-bold text-indigo-600">Cybersecurity & Full-Stack</span></p></div>
+                <button class="px-6 py-2.5 border-2 border-indigo-100 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all text-sm">Explore All Suggestions</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="recommendation-card group bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-3 transition-all duration-500 overflow-hidden"><div class="relative h-48 bg-slate-900 flex items-center justify-center overflow-hidden"><div class="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div><div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div><i class="fas fa-user-secret text-6xl text-indigo-500/50 group-hover:scale-125 group-hover:text-indigo-400 transition-all duration-700"></i><div class="absolute top-4 right-4 bg-indigo-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-tighter shadow-lg">98% Match</div></div><div class="p-6"><div class="flex gap-2 mb-3"><span class="text-[10px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2 py-1 rounded">Advanced</span><span class="text-[10px] font-bold uppercase tracking-widest text-gray-500 bg-gray-100 px-2 py-1 rounded">15 Modules</span></div><h3 class="font-bold text-xl text-gray-800 leading-tight mb-4 group-hover:text-indigo-600 transition-colors">Ethical Hacking: Network Penetration Testing</h3><button class="w-full py-4 bg-gray-900 text-white font-bold rounded-2xl group-hover:bg-indigo-600 shadow-lg shadow-gray-200 group-hover:shadow-indigo-200 transition-all">Start Learning</button></div></div>
+                <div class="recommendation-card group bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-3 transition-all duration-500 overflow-hidden"><div class="relative h-48 bg-blue-950 flex items-center justify-center overflow-hidden"><div class="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/circuit-board.png')]"></div><div class="absolute inset-0 bg-gradient-to-t from-blue-950 via-transparent to-transparent"></div><i class="fab fa-react text-6xl text-blue-500/50 group-hover:rotate-180 transition-all duration-[2000ms]"></i><div class="absolute top-4 right-4 bg-blue-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-tighter shadow-lg">New Release</div></div><div class="p-6"><div class="flex gap-2 mb-3"><span class="text-[10px] font-bold uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-1 rounded">Full-Stack</span><span class="text-[10px] font-bold uppercase tracking-widest text-gray-500 bg-gray-100 px-2 py-1 rounded">20 Hours</span></div><h3 class="font-bold text-xl text-gray-800 leading-tight mb-4 group-hover:text-blue-600 transition-colors">Build Cross-Platform Apps with React Native</h3><button class="w-full py-4 bg-gray-900 text-white font-bold rounded-2xl group-hover:bg-blue-600 shadow-lg shadow-gray-200 group-hover:shadow-blue-200 transition-all">View Course</button></div></div>
+                <div class="recommendation-card group bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-3 transition-all duration-500 overflow-hidden"><div class="relative h-48 bg-purple-950 flex items-center justify-center overflow-hidden"><div class="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div><div class="absolute inset-0 bg-gradient-to-t from-purple-950 via-transparent to-transparent"></div><i class="fas fa-brain text-6xl text-purple-500/50 group-hover:scale-110 transition-all duration-700"></i><div class="absolute top-4 right-4 bg-purple-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-tighter shadow-lg">Trending</div></div><div class="p-6"><div class="flex gap-2 mb-3"><span class="text-[10px] font-bold uppercase tracking-widest text-purple-600 bg-purple-50 px-2 py-1 rounded">Ethics</span><span class="text-[10px] font-bold uppercase tracking-widest text-gray-500 bg-gray-100 px-2 py-1 rounded">Free Access</span></div><h3 class="font-bold text-xl text-gray-800 leading-tight mb-4 group-hover:text-purple-600 transition-colors">AI Ethics & Privacy: Navigating Future Tech</h3><button class="w-full py-4 bg-gray-900 text-white font-bold rounded-2xl group-hover:bg-purple-600 shadow-lg shadow-gray-200 group-hover:shadow-purple-200 transition-all">Claim Access</button></div></div>
+            </div>
+        </section>
+
+        <div class="bg-white rounded-[2.5rem] p-6 border border-gray-100 shadow-sm mb-8">
+            <div class="flex items-center justify-between mb-6"><h3 class="text-lg font-black text-gray-800 flex items-center gap-2"><span class="text-xl">🏆</span> Leaderboard</h3><span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-wider">Monthly Rank</span></div>
+            <div class="flex items-end justify-around mb-8 pt-4">
+                <div class="flex flex-col items-center"><div class="relative"><div class="w-12 h-12 rounded-full border-4 border-gray-100 overflow-hidden"><img src="https://ui-avatars.com/api/?name=Teerath&background=random" alt="User"></div><div class="absolute -bottom-2 -right-1 bg-gray-400 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white">2</div></div><p class="text-[10px] font-bold mt-2">Teerath</p><p class="text-[11px] text-blue-600 font-black">2,450</p></div>
+                <div class="flex flex-col items-center scale-110"><div class="relative"><div class="w-16 h-16 rounded-full border-4 border-yellow-400 overflow-hidden shadow-lg shadow-yellow-100"><img src="https://ui-avatars.com/api/?name=Munesh&background=0D6EFD&color=fff" alt="User"></div><div class="absolute -bottom-2 -right-1 bg-yellow-400 text-white text-[10px] w-6 h-6 rounded-full flex items-center justify-center font-bold border-2 border-white">1</div></div><p class="text-xs font-black mt-2">Munesh</p><p class="text-[12px] text-yellow-600 font-black">2,890</p></div>
+                <div class="flex flex-col items-center"><div class="relative"><div class="w-12 h-12 rounded-full border-4 border-orange-100 overflow-hidden"><img src="https://ui-avatars.com/api/?name=Ali&background=random" alt="User"></div><div class="absolute -bottom-2 -right-1 bg-orange-400 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white">3</div></div><p class="text-[10px] font-bold mt-2">Ali</p><p class="text-[11px] text-orange-600 font-black">1,920</p></div>
+            </div>
+            <div class="bg-gray-50 rounded-2xl p-3 flex justify-between items-center mb-4"><div class="text-center flex-1 border-r border-gray-200"><p class="text-[9px] text-gray-400 uppercase font-bold">Lesson</p><p class="text-xs font-bold text-green-600">+10 PTS</p></div><div class="text-center flex-1"><p class="text-[9px] text-gray-400 uppercase font-bold">Quiz Pass</p><p class="text-xs font-bold text-purple-600">+50 PTS</p></div></div>
+            <button class="w-full py-2 text-xs font-bold text-gray-400 hover:text-blue-600 transition-colors uppercase tracking-widest">View Full Ranking</button>
+        </div>
+
+        <div class="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><span class="text-blue-600">💬</span> Community Feed</h3>
+            <div class="mb-6 flex gap-2 p-2 bg-gray-50 rounded-2xl"><input type="text" id="postInput" placeholder="Ask something, Munesh..." class="flex-1 bg-transparent border-none focus:ring-0 px-2 py-2 text-sm"><button onclick="addPost()" class="bg-blue-600 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95">Post</button></div>
+            <div id="communityContainer" class="space-y-4"></div>
+            <button id="showAllBtn" onclick="toggleFeeds()" class="w-full mt-4 py-2 text-sm font-bold text-blue-600 hover:bg-blue-50 rounded-xl transition-all hidden">View More Discussions</button>
+        </div>
+    </main>
+</div>
+
+<div id="courseModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+    <div class="bg-white rounded-xl p-6 w-full max-w-4xl mx-auto my-8">
+        <div class="flex justify-between items-center mb-4"><h2 id="modalCourseTitle" class="text-2xl font-bold"></h2><button onclick="closeModal()" class="text-gray-500 text-2xl">&times;</button></div>
+        <div class="mb-3 text-right"><button onclick="refreshCourseData()" class="text-sm bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded">⟳ Refresh Course Data</button></div>
+        <div id="modalCourseContent" class="space-y-5 max-h-96 overflow-y-auto pr-2"></div>
+        <div id="modalEnrollButton" class="mt-6 text-center"></div>
+    </div>
+</div>
+
+<div id="certificate-template-wrapper" style="position: absolute; left: -9999px; top: 0;">
+    <div id="certificate-content" style="width: 1050px; height: 750px; padding: 50px; background: #ffffff; border: 1px solid #d1d5db; position: relative; box-sizing: border-box; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #111827; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.1);">
+        <div style="position: absolute; left: 0; top: 0; width: 15px; height: 100%; background: linear-gradient(to bottom, #1e3c72, #2a5298);"></div>
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; height: 600px; opacity: 0.03; pointer-events: none; border: 40px solid #1e3c72; border-radius: 50%;"></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2;">
+            <div><h1 style="font-size: 28px; font-weight: 900; color: #1e3c72; margin: 0; letter-spacing: -1px; display: flex; align-items: center; gap: 8px;"><span style="background: #1e3c72; color: white; padding: 2px 10px; border-radius: 4px;">P</span> Pak eduTool</h1><p style="font-size: 11px; font-weight: 700; color: #6b7280; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 2px;">Professional Certification Division</p></div>
+            <div style="text-align: center;"><div style="padding: 6px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);"><img id="cert-qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://pakedutool.com/verify/STU-MUNESH-2026&bgcolor=ffffff&color=1e3c72" style="width: 100px; height: 100px; display: block;"></div><p style="font-size: 9px; color: #9ca3af; margin-top: 6px; font-weight: bold; text-transform: uppercase;">ID: PET-9901-X</p></div>
+        </div>
+        <div style="margin-top: 60px; text-align: center; position: relative; z-index: 2;"><p style="font-size: 16px; color: #4b5563; font-weight: 600; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 20px;">Certificate of Achievement</p><p style="font-size: 18px; color: #374151; margin: 0;">This acknowledges that</p><h2 id="cert-student-name" style="font-size: 52px; font-weight: 800; color: #111827; margin: 15px 0; font-family: 'Georgia', serif;">Student Name</h2><div style="width: 100px; height: 3px; background: #2a5298; margin: 20px auto;"></div><p style="font-size: 20px; color: #4b5563; line-height: 1.6; max-width: 800px; margin: 30px auto;">has successfully met all academic requirements and demonstrated professional proficiency in the course</p><h3 id="cert-course-name" style="font-size: 32px; font-weight: 700; color: #1e3c72; margin: 10px 0;">Course Title</h3></div>
+        <div style="display: flex; justify-content: center; gap: 60px; margin-top: 50px; position: relative; z-index: 2;"><div style="text-align: center;"><p style="font-size: 12px; color: #9ca3af; font-weight: bold; text-transform: uppercase;">Date issued</p><p id="cert-date" style="font-size: 18px; color: #1f2937; font-weight: 700; margin-top: 5px;">April 30, 2026</p></div><div style="text-align: center;"><p style="font-size: 12px; color: #9ca3af; font-weight: bold; text-transform: uppercase;">Grade Achieved</p><p style="font-size: 18px; color: #1f2937; font-weight: 700; margin-top: 5px;">Distinction (A+)</p></div></div>
+        <div style="margin-top: 80px; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 40px; position: relative; z-index: 2;"><div style="text-align: center;"><div style="height: 60px;"><img src="https://upload.wikimedia.org/wikipedia/commons/b/b3/Signature_of_R_N_Tagore.png" style="height: 80px; filter: contrast(1.5) brightness(0.8) sepia(1) hue-rotate(190deg); margin-bottom: -20px;"></div><div style="width: 220px; border-top: 1px solid #d1d5db; padding-top: 10px;"><p style="font-size: 16px; font-weight: 700; color: #111827; margin: 0;">Prof. Attique Rafeeq</p><p style="font-size: 12px; color: #6b7280; margin: 2px 0 0 0;">Head of Academy</p></div></div><div style="width: 110px; height: 110px; border: 2px solid #f3f4f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #fff;"><div style="width: 90px; height: 90px; border: 1px dashed #2a5298; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column; color: #2a5298; text-align: center;"><span style="font-size: 14px;">⭐</span><span style="font-size: 8px; font-weight: 900; text-transform: uppercase;">Official<br>Verified<br>Security</span></div></div><div style="text-align: center;"><div style="height: 60px;"><img src="https://upload.wikimedia.org/wikipedia/commons/f/f1/John_Hancock_signature.png" style="height: 70px; filter: grayscale(1) contrast(1.5); margin-bottom: -15px;"></div><div style="width: 220px; border-top: 1px solid #d1d5db; padding-top: 10px;"><p style="font-size: 16px; font-weight: 700; color: #111827; margin: 0;">Academic Registrar</p><p style="font-size: 12px; color: #6b7280; margin: 2px 0 0 0;">Verifying Authority</p></div></div></div>
+        <div style="position: absolute; bottom: 20px; left: 0; width: 100%; text-align: center; font-size: 10px; color: #9ca3af; font-weight: 500;">This document is digitally signed and encrypted. Validation can be performed online via the QR code.</div>
+    </div>
+</div>
+
+<footer class="bg-gray-900 text-white pt-16 pb-8 font-sans">
+    <div class="container mx-auto px-6">
+        <div class="grid md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
+            <div><h3 class="font-bold text-xl mb-6 flex items-center tracking-tight"><span class="text-2xl mr-2">🎓</span> Pak eduToll</h3><ul class="space-y-3 text-sm text-gray-400"><li><a href="#" class="hover:text-blue-400 transition-colors">About Our Vision</a></li><li><a href="#" class="hover:text-blue-400 transition-colors">Leadership</a></li><li><a href="#" class="hover:text-blue-400 transition-colors">Careers</a></li><li><a href="#" class="hover:text-blue-400 transition-colors">Catalog</a></li></ul></div>
+            <div><h3 class="font-bold text-sm uppercase tracking-widest text-gray-200 mb-6">Programs</h3><ul class="space-y-3 text-sm text-gray-400"><li><a href="#" class="hover:text-blue-400 transition-colors">Professional Certificates</a></li><li><a href="#" class="hover:text-blue-400 transition-colors">MasterTrack® Degrees</a></li><li><a href="#" class="hover:text-blue-400 transition-colors">University Degrees</a></li><li><a href="#" class="hover:text-blue-400 transition-colors">Enterprise Solutions</a></li></ul></div>
+            <div><h3 class="font-bold text-sm uppercase tracking-widest text-gray-200 mb-6">Partners</h3><ul class="space-y-3 text-sm text-gray-400"><li><a href="#" class="hover:text-blue-400 transition-colors">For Government</a></li><li><a href="#" class="hover:text-blue-400 transition-colors">For Campus</a></li><li><a href="#" class="hover:text-blue-400 transition-colors">Become a Partner</a></li></ul></div>
+            <div><h3 class="font-bold text-sm uppercase tracking-widest text-gray-200 mb-6">Support</h3><ul class="space-y-3 text-sm text-gray-400"><li><a href="#" class="hover:text-blue-400 transition-colors">Help Center</a></li><li><a href="#" class="hover:text-blue-400 transition-colors">Contact Us</a></li><li><a href="#" class="hover:text-blue-400 transition-colors">Accessibility</a></li></ul></div>
+            <div><h3 class="font-bold text-sm uppercase tracking-widest text-gray-200 mb-6">Resources</h3><ul class="space-y-3 text-sm text-gray-400"><li><a href="#" class="hover:text-blue-400 transition-colors">Beta Testers</a></li><li><a href="#" class="hover:text-blue-400 transition-colors">Tech Blog</a></li><li><a href="#" class="hover:text-blue-400 transition-colors">Learner Stories</a></li></ul></div>
+        </div>
+        <div class="border-t border-gray-800 py-12">
+            <div class="max-w-6xl mx-auto"><div class="text-center mb-10"><h4 class="text-xs font-black text-gray-500 uppercase tracking-[0.3em] mb-2">Legal Compliance & Code of Ethics</h4><div class="h-1 w-20 bg-blue-600 mx-auto rounded-full"></div></div>
+            <div class="grid lg:grid-cols-3 gap-12">
+                <div class="space-y-4"><div class="flex items-center gap-2 mb-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span><h5 class="text-blue-400 text-xs font-black uppercase tracking-wider">English Terms</h5></div><div class="bg-gray-800/30 p-5 rounded-2xl border border-gray-700/50"><p class="text-[11px] leading-relaxed text-gray-400 italic mb-3">"Empowering Education through Integrity"</p><p class="text-[11px] leading-relaxed text-gray-300"><b>Academic Integrity:</b> All users (Registration No: A430007) must adhere to the Honor Code. Unauthorized use of AI or external help in quizzes is prohibited. <br><br><b>Liability:</b> Pak eduToll and Instructor Attique Rafeeq are not responsible for user-uploaded content accuracy or technical downtime. <br><br><b>Certificates:</b> Digital points and leaderboard ranks are motivational tools and do not constitute legal certification without institutional verification.</p></div></div>
+                <div class="space-y-4 text-right" dir="rtl"><div class="flex items-center justify-end gap-2 mb-2"><h5 class="text-green-400 text-xs font-black uppercase tracking-wider font-urdu">اردو قانونی شرائط</h5><span class="w-2 h-2 bg-green-500 rounded-full"></span></div><div class="bg-gray-800/30 p-5 rounded-2xl border border-gray-700/50"><p class="text-[12px] leading-relaxed text-gray-400 italic mb-3">"دیانتداری کے ذریعے تعلیمی ترقی"</p><p class="text-[13px] leading-relaxed text-gray-300 font-medium"><b>تعلیمی اخلاقیات:</b> پاک ایڈو ٹول کے تمام صارفین تعلیمی سالمیت برقرار رکھنے کے پابند ہیں۔ کوئز میں نقل یا غیر قانونی امداد اکاؤنٹ کی معطلی کا باعث بن سکتی ہے۔ <br><br><b>ذمہ داری:</b> پلیٹ فارم اور انسٹرکٹر عتیق رفیق بیرونی مواد کی درستگی یا فنی خرابی کے ذمہ دار نہیں ہیں۔ <br><br><b>تصدیق:</b> پوائنٹس اور رینکنگ صرف حوصلہ افزائی کے لیے ہیں اور باقاعدہ تصدیق کے بغیر سرکاری ڈگری کا درجہ نہیں رکھتے۔</p></div></div>
+                <div class="space-y-4 text-right" dir="rtl"><div class="flex items-center justify-end gap-2 mb-2"><h5 class="text-orange-400 text-xs font-black uppercase tracking-wider">سنڌي قانوني شرطون</h5><span class="w-2 h-2 bg-orange-400 rounded-full"></span></div><div class="bg-gray-800/30 p-5 rounded-2xl border border-gray-700/50"><p class="text-[12px] leading-relaxed text-gray-400 italic mb-3">"ديانتداري سان تعليمي واڌارو"</p><p class="text-[13px] leading-relaxed text-gray-300 font-medium"><b>تعليمي اخلاقيات:</b> پاڪ ايڊو ٽول جا سڀ شاگرد تعليمي ايمانداري برقرار رکڻ جا پابند آهن. ڪوئز دوران AI يا ٻاهرين مدد جو استعمال سخت منع آهی۔ <br><br><b>ذميواري:</b> پليٽ فارم ۽ انسٽرڪٽر ڪنهن به فني خرابي يا مواد جي غلطي جا ذميوار نه هوندا۔ <br><br><b>سند جي حيثيت:</b> ليڊر بورڊ جا پوائنٽس صرف حوصلي افزائي لاءِ آهن ۽ سرڪاري تصديق کان سواءِ سند جي حيثيت نٿا رکن۔</p></div></div>
+            </div></div>
+        </div>
+        <div class="flex flex-col md:flex-row justify-between items-center py-8 border-t border-gray-800 gap-6"><div class="flex space-x-6"><a href="#" class="text-gray-500 hover:text-white transition-all transform hover:-translate-y-1"><i class="fab fa-facebook text-xl"></i></a><a href="#" class="text-gray-500 hover:text-white transition-all transform hover:-translate-y-1"><i class="fab fa-linkedin text-xl"></i></a><a href="#" class="text-gray-500 hover:text-white transition-all transform hover:-translate-y-1"><i class="fab fa-youtube text-xl"></i></a><a href="#" class="text-gray-500 hover:text-white transition-all transform hover:-translate-y-1"><i class="fab fa-instagram text-xl"></i></a></div><div class="flex space-x-4"><a href="#" class="flex items-center space-x-3 bg-black/50 border border-gray-700 px-5 py-2 rounded-xl hover:bg-gray-800 transition-all"><i class="fab fa-apple text-2xl"></i><div class="text-left"><p class="text-[10px] text-gray-400">Download on</p><p class="text-sm font-bold">App Store</p></div></a><a href="#" class="flex items-center space-x-3 bg-black/50 border border-gray-700 px-5 py-2 rounded-xl hover:bg-gray-800 transition-all"><i class="fab fa-google-play text-xl"></i><div class="text-left"><p class="text-[10px] text-gray-400">Get it on</p><p class="text-sm font-bold">Google Play</p></div></a></div></div>
+        <div class="text-center pt-8 border-t border-gray-800"><div class="flex justify-center items-center space-x-3 mb-4"><span class="text-2xl">🎓</span><span class="font-bold text-lg tracking-tight">Pak eduToll</span><span class="h-4 w-[1px] bg-gray-700"></span><span class="text-[10px] font-bold text-green-500 border border-green-500/30 px-2 py-0.5 rounded uppercase">Certified B Corp</span></div><p class="text-xs text-gray-500">© 2026 Pak eduToll Inc. All rights reserved.</p><p class="text-[10px] text-gray-600 mt-2 font-medium tracking-wide">HEC Recognized Platform | In Collaboration with PITB & Digital Pakistan Initiative</p></div>
+    </div>
+</footer>
+
+<script>
+    const API_BASE = 'http://localhost:5000';
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    if (!token) window.location.href = 'login.html';
+
+    const firstName = user.name ? user.name.split(' ')[0] : 'Student';
+    
+    document.getElementById('userName').innerText = user.name || 'Student';
+    document.getElementById('userAvatar').innerText = user.name?.charAt(0) || '👤';
+    document.getElementById('sidebarAvatar').innerText = user.name?.charAt(0) || '👤';
+    document.getElementById('sidebarName').innerText = user.name || 'Student';
+    document.getElementById('welcomeName').innerText = firstName;
+    document.getElementById('dailyGoalMomentum').innerHTML = `Keep up the momentum, ${firstName}!`;
+
+    let currentCourse = null;
+    let isEnrolled = false;
+    let currentCourseId = null;
+    let enrolledCourseIds = [];
+    let moduleProgress = {}; // will also store finalExamPassed flag per course
+    let enrolledCoursesData = [];
+
+    // Helper: Check if final exam is passed for a course
+    function isFinalExamPassed(courseId) {
+        return moduleProgress[`final_${courseId}`] === true;
+    }
+    function setFinalExamPassed(courseId) {
+        moduleProgress[`final_${courseId}`] = true;
+    }
+
+    // Helper: Check if all modules are passed
+    function areAllModulesPassed(course) {
+        if (!course.modules || course.modules.length === 0) return true;
+        for (let i = 0; i < course.modules.length; i++) {
+            if (!moduleProgress[i] || !moduleProgress[i].passed) return false;
+        }
+        return true;
+    }
+
+    // Helper: Check if course is fully completed (modules + final exam if exists)
+    function isCourseCompleted(course) {
+        const modulesOk = areAllModulesPassed(course);
+        if (course.finalExam && course.finalExam.length > 0) {
+            return modulesOk && isFinalExamPassed(course._id);
+        }
+        return modulesOk;
+    }
+
+    // Show certificate download button in modal if course completed
+    function updateCertificateButtonInModal(course) {
+        const btnContainer = document.getElementById('modalEnrollButton');
+        if (isCourseCompleted(course)) {
+            btnContainer.innerHTML = `<div class="bg-green-100 p-4 rounded-lg border border-green-200">
+                <p class="text-green-700 font-bold mb-2">🎉 Congratulations! You've completed the course.</p>
+                <button onclick="downloadCertificate()" class="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 transition">Download Certificate</button>
+            </div>`;
+        } else if (!isEnrolled && user.role === 'student') {
+            btnContainer.innerHTML = `<button onclick="initiatePayment('${course._id}', '${course.title}', ${course.price})" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">Enroll Now - PKR ${course.price}</button>`;
+        } else {
+            btnContainer.innerHTML = '';
+        }
+    }
+
+    async function downloadCertificate() {
+        const { jsPDF } = window.jspdf;
+        const element = document.getElementById('certificate-content');
+        document.getElementById('cert-student-name').innerText = user.name || "Student";
+        document.getElementById('cert-course-name').innerText = currentCourse.title;
+        document.getElementById('cert-date').innerText = new Date().toLocaleDateString();
+        html2canvas(element, { scale: 2 }).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('l', 'mm', 'a4');
+            pdf.addImage(imgData, 'PNG', 0, 0, 297, 210);
+            pdf.save(`${currentCourse.title}_Certificate.pdf`);
+        });
+    }
+
+    // Show final exam modal
+    function showFinalExam(course) {
+        const finalExam = course.finalExam;
+        if (!finalExam || finalExam.length === 0) {
+            alert("No final exam available for this course.");
+            return;
+        }
+        let content = `<div class="p-4"><h3 class="font-bold text-xl mb-3">Final Exam: ${escapeHtml(course.title)}</h3>`;
+        content += `<p class="text-sm text-gray-600 mb-4">Passing score: 70%. Good luck!</p>`;
+        finalExam.forEach((q, qIdx) => {
+            content += `<div class="quiz-question mb-4 p-3 bg-gray-50 rounded"><p class="font-medium">Q${qIdx+1}: ${escapeHtml(q.question)}</p>`;
+            q.options.forEach((opt, optIdx) => {
+                content += `<label class="quiz-option flex items-center gap-2 ml-4"><input type="radio" name="final_q${qIdx}" value="${optIdx}"><span>${escapeHtml(opt)}</span></label>`;
+            });
+            content += `</div>`;
+        });
+        content += `<button onclick="submitFinalExam('${course._id}')" class="bg-purple-600 text-white px-4 py-2 rounded mt-2">Submit Final Exam</button><div id="finalExamResult" class="mt-2 text-sm"></div>`;
+        content += `<div class="mt-4 text-right"><button onclick="this.closest('.modal-overlay').remove()" class="bg-blue-600 text-white px-4 py-2 rounded">Close</button></div></div>`;
+        const modalDiv = document.createElement('div');
+        modalDiv.className = 'modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        modalDiv.innerHTML = `<div class="bg-white rounded-xl max-w-3xl w-full max-h-[85vh] overflow-auto p-4">${content}</div>`;
+        document.body.appendChild(modalDiv);
+        modalDiv.addEventListener('click', (e) => { if (e.target === modalDiv) modalDiv.remove(); });
+
+        window.submitFinalExam = async (courseId) => {
+            const questions = finalExam;
+            let score = 0;
+            questions.forEach((q, idx) => {
+                const selected = document.querySelector(`input[name="final_q${idx}"]:checked`);
+                if (selected && parseInt(selected.value) === q.correct) score++;
+            });
+            let percentage = (score / questions.length) * 100;
+            const resultDiv = document.getElementById('finalExamResult');
+            if (percentage >= 70) {
+                resultDiv.innerHTML = `<strong>✅ Final Exam Passed! Score: ${score}/${questions.length} (${percentage.toFixed(0)}%)</strong>`;
+                setFinalExamPassed(courseId);
+                // Refresh current modal to show certificate button
+                if (currentCourseId === courseId) {
+                    await openCourseModal(courseId);
+                }
+                Swal.fire({ title: 'Congratulations!', text: `You passed the final exam! Certificate is now available.`, icon: 'success', confirmButtonText: 'Great!', confirmButtonColor: '#1e3c72' }).then(() => { modalDiv.remove(); });
+                // Also update deadline card
+                updateUpcomingDeadline();
+            } else {
+                resultDiv.innerHTML = `<strong>❌ Failed. Score: ${score}/${questions.length} (${percentage.toFixed(0)}%). Need 70% to pass.</strong>`;
+                Swal.fire({ title: 'Final Exam Failed', text: `Your score: ${percentage.toFixed(0)}%. Please review and retake.`, icon: 'error', confirmButtonText: 'Try Again', confirmButtonColor: '#d33' });
+            }
+        };
+    }
+
+    // Update upcoming deadline card: find first incomplete quiz OR final exam
+    async function updateUpcomingDeadline() {
+        try {
+            const meRes = await fetch(`${API_BASE}/api/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const meData = await meRes.json();
+            if (meData.success && meData.user.enrolledCourses) {
+                enrolledCoursesData = meData.user.enrolledCourses.filter(e => e.courseId && e.courseId.modules);
+                let foundItem = null;
+                let foundCourse = null;
+                let isFinal = false;
+                for (const enrollment of enrolledCoursesData) {
+                    const course = enrollment.courseId;
+                    // Skip if course already completed
+                    if (isCourseCompleted(course)) continue;
+                    // First check for incomplete lesson quiz
+                    if (course.modules) {
+                        for (let mIdx = 0; mIdx < course.modules.length; mIdx++) {
+                            const module = course.modules[mIdx];
+                            if (module.lessons) {
+                                for (let lIdx = 0; lIdx < module.lessons.length; lIdx++) {
+                                    const lesson = module.lessons[lIdx];
+                                    if (lesson.quiz && lesson.quiz.length > 0) {
+                                        // Check if this quiz is not yet passed (moduleProgress for this module not passed)
+                                        if (!moduleProgress[mIdx] || !moduleProgress[mIdx].passed) {
+                                            foundItem = { type: 'lesson', moduleIdx: mIdx, lessonIdx: lIdx, lesson: lesson };
+                                            foundCourse = course;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (foundItem) break;
+                            }
+                        }
+                    }
+                    if (!foundItem && course.finalExam && course.finalExam.length > 0 && !isFinalExamPassed(course._id)) {
+                        foundItem = { type: 'final' };
+                        foundCourse = course;
+                        isFinal = true;
+                        break;
+                    }
+                }
+                if (foundItem) {
+                    if (foundItem.type === 'lesson') {
+                        document.getElementById('deadlineTitle').innerHTML = `Upcoming Deadline: ${foundItem.lesson.title}`;
+                        document.getElementById('deadlineDesc').innerHTML = `Course: ${foundCourse.title} • Complete quiz to earn points!`;
+                        document.getElementById('deadlineActionBtn').onclick = () => {
+                            openCourseModal(foundCourse._id).then(() => {
+                                setTimeout(() => {
+                                    const lessonItem = document.querySelector(`.lesson-item[data-module-index="${foundItem.moduleIdx}"][data-lesson-index="${foundItem.lessonIdx}"]`);
+                                    if (lessonItem) lessonItem.click();
+                                }, 500);
+                            });
+                        };
+                    } else {
+                        document.getElementById('deadlineTitle').innerHTML = `Final Exam: ${foundCourse.title}`;
+                        document.getElementById('deadlineDesc').innerHTML = `Complete the final exam to earn your certificate!`;
+                        document.getElementById('deadlineActionBtn').onclick = () => {
+                            openCourseModal(foundCourse._id).then(() => {
+                                setTimeout(() => {
+                                    const finalBtn = document.getElementById('takeFinalExamBtn');
+                                    if (finalBtn) finalBtn.click();
+                                    else alert("Final exam not available yet. Please ensure you have completed all modules.");
+                                }, 500);
+                            });
+                        };
+                    }
+                    document.getElementById('deadlineActionBtn').style.display = 'inline-block';
+                } else {
+                    document.getElementById('deadlineTitle').innerHTML = `All Caught Up! 🎉`;
+                    document.getElementById('deadlineDesc').innerHTML = `You've completed all quizzes and exams. Great job!`;
+                    document.getElementById('deadlineActionBtn').style.display = 'none';
+                }
+            } else {
+                document.getElementById('deadlineTitle').innerHTML = `Enroll in a Course`;
+                document.getElementById('deadlineDesc').innerHTML = `Start learning to see quizzes here!`;
+                document.getElementById('deadlineActionBtn').style.display = 'none';
+            }
+        } catch (err) {
+            console.warn(err);
+        }
+    }
+
+    async function loadPublishedCourses() {
+        try {
+            const res = await fetch(`${API_BASE}/api/courses`);
+            const data = await res.json();
+            const courses = data.data || [];
+            const container = document.getElementById('coursesContainer');
+            if (!courses.length) {
+                container.innerHTML = '<div class="col-span-full text-center py-10 text-gray-500">No published courses available yet.</div>';
+                return;
+            }
+            try {
+                const meRes = await fetch(`${API_BASE}/api/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const meData = await meRes.json();
+                if (meData.success && meData.user.enrolledCourses) {
+                    enrolledCourseIds = meData.user.enrolledCourses.map(e => e.courseId?._id || e.courseId);
+                    enrolledCoursesData = meData.user.enrolledCourses;
+                }
+                await updateUpcomingDeadline();
+            } catch(e) { console.warn(e); }
+
+            container.innerHTML = courses.map(course => {
+                const isEnrolledCourse = enrolledCourseIds.includes(course._id);
+                return `<div class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden hover:shadow-md transition-shadow"><div class="h-32 bg-blue-900 flex items-center justify-center text-white text-4xl">📘</div><div class="p-4 flex-grow flex flex-col"><div class="flex justify-between items-start"><h3 class="font-bold text-lg text-gray-800">${escapeHtml(course.title)}</h3>${isEnrolledCourse ? '<span class="enrolled-badge text-xs">✓ Enrolled</span>' : ''}</div><p class="text-sm text-gray-600 mt-1">${escapeHtml(course.description.substring(0, 100))}</p><div class="flex justify-between items-center mt-3"><span class="text-xs text-gray-500">${course.level || 'Beginner'}</span><span class="font-bold text-blue-600">PKR ${course.price}</span></div><p class="text-xs text-gray-400 mt-2">By: ${course.instructorId?.name || 'Unknown'}</p><div class="mt-3 flex gap-2"><button onclick="openCourseModal('${course._id}')" class="flex-1 bg-blue-600 text-white py-1 rounded text-sm">View Details</button>${!isEnrolledCourse ? `<button onclick="initiatePayment('${course._id}', '${course.title}', ${course.price})" class="flex-1 bg-green-600 text-white py-1 rounded text-sm">Enroll Now</button>` : ''}</div></div></div>`;
+            }).join('');
+        } catch (error) { console.error(error); document.getElementById('coursesContainer').innerHTML = '<div class="col-span-full text-center py-10 text-red-500">Failed to load courses.</div>'; }
+    }
+
+    function getLessonDuration(lesson) {
+        if (lesson.videoUrl) return Math.floor(Math.random() * 8) + 3;
+        if (lesson.notes) return 2;
+        if (lesson.quiz && lesson.quiz.length) return lesson.quiz.length * 2;
+        return 2;
+    }
+
+    function isModuleUnlocked(moduleIdx, modules) {
+        if (moduleIdx === 0) return true;
+        const prevProgress = moduleProgress[moduleIdx - 1];
+        if (!prevProgress) return false;
+        const prevModule = modules[moduleIdx - 1];
+        const hasQuiz = prevModule.lessons.some(l => l.quiz && l.quiz.length > 0);
+        if (hasQuiz) return prevProgress.passed === true;
+        else {
+            const allLessonsCompleted = prevModule.lessons.every((_, idx) => prevProgress.lessonsCompleted?.has(idx));
+            return allLessonsCompleted;
+        }
+    }
+
+    function showLessonContent(lesson, moduleIdx, lessonIdx, modules, totalModules, updateUI) {
+        let content = `<div class="p-4"><h3 class="font-bold text-xl mb-3">${escapeHtml(lesson.title)}</h3>`;
+        if (lesson.videoUrl) {
+            let embedUrl = '';
+            if (lesson.videoUrl.includes('youtube.com/embed/')) embedUrl = lesson.videoUrl;
+            else if (lesson.videoUrl.includes('youtu.be/')) {
+                const videoId = lesson.videoUrl.split('youtu.be/')[1]?.split(/[?#]/)[0];
+                if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
+            } else if (lesson.videoUrl.includes('youtube.com/watch')) {
+                const urlParams = new URLSearchParams(lesson.videoUrl.split('?')[1]);
+                const videoId = urlParams.get('v');
+                if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
+            }
+            if (embedUrl) content += `<div class="video-container mb-3"><iframe src="${embedUrl}" frameborder="0" allowfullscreen class="w-full h-full absolute top-0 left-0"></iframe></div>`;
+            else content += `<div class="video-container mb-3"><video src="${lesson.videoUrl}" controls class="w-full h-full object-contain"></video></div>`;
+            content += `<div class="transcription-box"><p class="font-semibold">Transcription:</p><p>${lesson.notes || 'No transcription available.'}</p></div>`;
+        }
+        if (lesson.notes && !lesson.videoUrl) content += `<div class="bg-gray-100 p-3 rounded-lg my-3 whitespace-pre-wrap">${escapeHtml(lesson.notes)}</div>`;
+        if (lesson.quiz && lesson.quiz.length > 0) {
+            content += `<div class="mt-4 border-t pt-3"><strong class="block mb-2">Quiz (Passing: 70%)</strong>`;
+            lesson.quiz.forEach((q, qIdx) => {
+                content += `<div class="quiz-question mb-3 p-2 bg-gray-50 rounded"><p class="font-medium">Q${qIdx+1}: ${escapeHtml(q.question)}</p>`;
+                q.options.forEach((opt, optIdx) => {
+                    content += `<label class="quiz-option flex items-center gap-2 ml-4"><input type="radio" name="q${qIdx}" value="${optIdx}"><span>${escapeHtml(opt)}</span></label>`;
+                });
+                content += `</div>`;
+            });
+            content += `<button onclick="submitQuiz(this, ${moduleIdx}, ${lessonIdx}, ${modules.length})" class="bg-purple-600 text-white px-4 py-2 rounded mt-2">Submit Quiz</button><div id="quizResult" class="mt-2 text-sm"></div></div>`;
+        } else {
+            content += `<div class="mt-4 p-3 bg-yellow-50 rounded border-l-4 border-yellow-500"><i class="fas fa-info-circle text-yellow-600"></i> <span class="font-medium">No quiz available for this lesson.</span></div>`;
+            content += `<div class="mt-4"><button onclick="markLessonAsRead(${moduleIdx}, ${lessonIdx}, ${modules.length})" class="bg-green-600 text-white px-4 py-2 rounded">Mark as Read</button></div>`;
+        }
+        content += `<div class="mt-4 text-right"><button onclick="this.closest('.modal-overlay').remove()" class="bg-blue-600 text-white px-4 py-2 rounded">Close</button></div></div>`;
+        const modalDiv = document.createElement('div');
+        modalDiv.className = 'modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        modalDiv.innerHTML = `<div class="bg-white rounded-xl max-w-3xl w-full max-h-[85vh] overflow-auto p-4">${content}</div>`;
+        document.body.appendChild(modalDiv);
+        modalDiv.addEventListener('click', (e) => { if (e.target === modalDiv) modalDiv.remove(); });
+
+        window.submitQuiz = async function(btn, moduleIdx, lessonIdx, totalModules) {
+            const questions = currentCourse.modules[moduleIdx].lessons[lessonIdx].quiz;
+            let score = 0;
+            questions.forEach((q, idx) => {
+                const selected = document.querySelector(`input[name="q${idx}"]:checked`);
+                if (selected && parseInt(selected.value) === q.correct) score++;
+            });
+            let percentage = (score / questions.length) * 100;
+            const resultDiv = document.getElementById('quizResult');
+            if (percentage >= 70) {
+                resultDiv.innerHTML = `<strong>✅ Passed! Your score: ${score}/${questions.length} (${percentage.toFixed(0)}%)</strong>`;
+                if (!moduleProgress[moduleIdx]) moduleProgress[moduleIdx] = { score: percentage, passed: true, lessonsCompleted: new Set() };
+                else moduleProgress[moduleIdx].passed = true;
+                if (typeof refreshModuleTree === 'function') refreshModuleTree();
+                Swal.fire({ title: 'Congratulations!', text: `You passed with ${percentage.toFixed(0)}%! Next module is now unlocked.`, icon: 'success', confirmButtonText: 'Great!', confirmButtonColor: '#1e3c72' }).then(() => { modalDiv.remove(); });
+                updateUpcomingDeadline();
+            } else {
+                resultDiv.innerHTML = `<strong>❌ Required 70%. Your score: ${score}/${questions.length} (${percentage.toFixed(0)}%). Please retake.</strong>`;
+                Swal.fire({ title: 'Assessment Failed', text: `Your score: ${percentage.toFixed(0)}%. You need at least 70% to pass. Please review and try again.`, icon: 'error', confirmButtonText: 'Try Again', confirmButtonColor: '#d33' });
+            }
+        };
+
+        window.markLessonAsRead = function(moduleIdx, lessonIdx, totalModules) {
+            if (!moduleProgress[moduleIdx]) moduleProgress[moduleIdx] = { lessonsCompleted: new Set() };
+            moduleProgress[moduleIdx].lessonsCompleted.add(lessonIdx);
+            const moduleLessons = currentCourse.modules[moduleIdx].lessons;
+            const allCompleted = moduleLessons.every((_, idx) => moduleProgress[moduleIdx].lessonsCompleted.has(idx));
+            if (allCompleted) { moduleProgress[moduleIdx].passed = true; alert('All lessons in this module completed! Next module unlocked.'); if (typeof refreshModuleTree === 'function') refreshModuleTree(); }
+            else alert('Lesson marked as read.');
+            modalDiv.remove();
+            if (typeof refreshModuleTree === 'function') refreshModuleTree();
+            updateUpcomingDeadline();
+        };
+    }
+
+    let refreshModuleTree = null;
+
+    async function ensureEnrollment(courseId) {
+        try {
+            const res = await fetch(`${API_BASE}/api/payments/create-order`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ courseId, paymentMethod: 'free' }) });
+            const result = await res.json();
+            return result.success === true;
+        } catch (err) { console.error('Enrollment fix error:', err); return false; }
+    }
+
+    async function refreshCourseData() { if (currentCourseId) { await ensureEnrollment(currentCourseId); await openCourseModal(currentCourseId); } }
+
+    async function openCourseModal(courseId) {
+        currentCourseId = courseId;
+        try {
+            if (enrolledCourseIds.includes(courseId)) await ensureEnrollment(courseId);
+            const res = await fetch(`${API_BASE}/api/courses/${courseId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await res.json();
+            let course = data.data;
+            let hasAccess = data.hasAccess;
+            isEnrolled = hasAccess;
+            currentCourse = course;
+            document.getElementById('modalCourseTitle').innerText = course.title;
+            const contentContainer = document.getElementById('modalCourseContent');
+            if (!course.modules || course.modules.length === 0) contentContainer.innerHTML = '<p class="text-gray-500">No modules yet.</p>';
+            else {
+                let modulesHtml = '';
+                for (let mIdx = 0; mIdx < course.modules.length; mIdx++) {
+                    const module = course.modules[mIdx];
+                    const unlocked = !isEnrolled ? false : isModuleUnlocked(mIdx, course.modules);
+                    const lessonCount = module.lessons.length;
+                    let totalDuration = 0;
+                    module.lessons.forEach(l => totalDuration += getLessonDuration(l));
+                    const lockIcon = (!unlocked && isEnrolled) ? '<i class="fas fa-lock text-gray-400 ml-2"></i>' : '';
+                    modulesHtml += `<div class="border rounded-lg overflow-hidden"><div class="module-header bg-gray-50 p-4 flex justify-between items-center" onclick="toggleModule(this)"><div><h3 class="font-bold text-lg text-gray-800">📁 ${escapeHtml(module.title)} ${lockIcon}</h3><div class="text-xs text-gray-500 mt-1">${lessonCount} items · ${totalDuration} min total</div></div><i class="fas fa-chevron-down text-gray-500"></i></div><div class="collapsible-content ${(isEnrolled && unlocked) ? 'open' : ''} border-t"><div class="p-2 space-y-1">`;
+                    if (module.lessons.length) {
+                        module.lessons.forEach((lesson, lIdx) => {
+                            let icon = '<i class="fas fa-play-circle text-blue-500"></i>';
+                            let typeLabel = 'Video';
+                            if (lesson.quiz && lesson.quiz.length) { icon = '<i class="fas fa-question-circle text-purple-500"></i>'; typeLabel = 'Quiz'; }
+                            else if (lesson.notes && !lesson.videoUrl) { icon = '<i class="fas fa-book-open text-green-600"></i>'; typeLabel = 'Reading'; }
+                            const duration = getLessonDuration(lesson);
+                            const isCompleted = moduleProgress[mIdx]?.lessonsCompleted?.has(lIdx) || moduleProgress[mIdx]?.passed;
+                            const completedMark = isCompleted ? '<i class="fas fa-check-circle text-green-500 ml-1 text-xs"></i>' : '';
+                            modulesHtml += `<div class="lesson-item flex items-center justify-between p-2 rounded-md hover:bg-gray-50 ${(!unlocked && isEnrolled) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}" data-module-index="${mIdx}" data-lesson-index="${lIdx}" data-unlocked="${unlocked}"><div class="flex items-center gap-2"><span class="item-icon">${icon}</span><span class="text-sm font-medium">${escapeHtml(lesson.title)} ${completedMark}</span>${lesson.quiz && lesson.quiz.length ? `<span class="text-xs bg-purple-100 text-purple-700 px-1 rounded">${lesson.quiz.length} Qs</span>` : ''}</div><div class="duration-text">${typeLabel} • ${duration} min</div></div>`;
+                        });
+                    } else modulesHtml += `<div class="text-sm text-gray-400 p-2">No lessons</div>`;
+                    modulesHtml += `</div></div></div>`;
+                }
+                contentContainer.innerHTML = modulesHtml;
+            }
+            // Final exam section
+            if (course.finalExam && course.finalExam.length && isEnrolled) {
+                const finalDiv = document.createElement('div');
+                finalDiv.className = 'mt-4 p-4 bg-yellow-50 rounded-lg flex justify-between items-center';
+                finalDiv.innerHTML = `<div><strong>📝 Final Exam:</strong> ${course.finalExam.length} questions</div>
+                                     <button id="takeFinalExamBtn" class="bg-purple-600 text-white px-4 py-2 rounded text-sm hover:bg-purple-700">Take Final Exam</button>`;
+                contentContainer.appendChild(finalDiv);
+                document.getElementById('takeFinalExamBtn').addEventListener('click', () => showFinalExam(course));
+            }
+            updateCertificateButtonInModal(course);
+            document.querySelectorAll('.lesson-item').forEach(el => {
+                const unlocked = el.dataset.unlocked === 'true';
+                if (unlocked && isEnrolled) el.addEventListener('click', (e) => { const moduleIdx = parseInt(el.dataset.moduleIndex); const lessonIdx = parseInt(el.dataset.lessonIndex); const lesson = course.modules[moduleIdx].lessons[lessonIdx]; if (lesson) showLessonContent(lesson, moduleIdx, lessonIdx, course.modules, course.modules.length, () => openCourseModal(courseId)); });
+                else if (isEnrolled && !unlocked) { el.style.cursor = 'not-allowed'; el.addEventListener('click', () => alert('Locked. Complete previous module first.')); }
+                else if (!isEnrolled) el.addEventListener('click', () => alert('You need to enroll to access this content.'));
+            });
+            document.getElementById('courseModal').classList.remove('hidden');
+            refreshModuleTree = () => openCourseModal(courseId);
+        } catch (err) { console.error(err); alert('Error loading course details'); }
+    }
+
+    function toggleModule(header) { const content = header.nextElementSibling; content.classList.toggle('open'); const icon = header.querySelector('i'); if (icon) icon.classList.toggle('fa-chevron-down'); if (icon) icon.classList.toggle('fa-chevron-up'); }
+
+    async function initiatePayment(courseId, courseTitle, amount) {
+        if (amount === 0) {
+            try {
+                const res = await fetch(`${API_BASE}/api/payments/create-order`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ courseId, paymentMethod: 'free' }) });
+                const data = await res.json();
+                if (data.success && data.free) { alert(`✅ Enrolled in "${courseTitle}" for free!`); loadPublishedCourses(); if (currentCourseId === courseId) openCourseModal(courseId); else closeModal(); }
+                else alert('Enrollment failed: ' + (data.error || 'Unknown error'));
+            } catch (err) { alert('Error: ' + err.message); }
+            return;
+        }
+        const method = confirm('Pay with EasyPaisa? Click OK for JazzCash') ? 'easypaisa' : 'jazzcash';
+        try {
+            const res = await fetch(`${API_BASE}/api/payments/create-order`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ courseId, paymentMethod: method }) });
+            const data = await res.json();
+            if (data.success) window.location.href = data.paymentUrl;
+            else alert('Payment failed: ' + data.error);
+        } catch (err) { alert('Payment error: ' + err.message); }
+    }
+
+    function closeModal() { document.getElementById('courseModal').classList.add('hidden'); }
+    function toggleProfileMenu() { }
+    function logout() { localStorage.clear(); window.location.href = 'login.html'; }
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
+
+    loadPublishedCourses();
+
+    window.toggleSidebar = function() { const sidebar = document.getElementById('sidebarMenu'); const overlay = document.getElementById('sidebarOverlay'); if (sidebar) sidebar.classList.toggle('-translate-x-full'); if (overlay) overlay.classList.toggle('hidden'); };
+    window.showSection = function(sectionName, element) { const allLinks = document.querySelectorAll('.sidebar-link'); allLinks.forEach(link => { link.classList.remove('bg-blue-50', 'text-blue-600'); link.classList.add('text-gray-600'); }); if (element) { element.classList.add('bg-blue-50', 'text-blue-600'); element.classList.remove('text-gray-600'); } if (window.innerWidth < 1024) toggleSidebar(); console.log("Switching to section: " + sectionName); };
+    window.addEventListener('resize', () => { const sidebar = document.getElementById('sidebarMenu'); const overlay = document.getElementById('sidebarOverlay'); if (window.innerWidth >= 1024 && sidebar) { sidebar.classList.add('-translate-x-full'); if (overlay) overlay.classList.add('hidden'); } });
+    window.toggleDarkMode = function() { const html = document.documentElement; const icon = document.getElementById('darkIcon'); html.classList.toggle('dark'); if (html.classList.contains('dark')) { icon.innerText = '☀️'; localStorage.setItem('theme', 'dark'); } else { icon.innerText = '🌙'; localStorage.setItem('theme', 'light'); } };
+    if (localStorage.getItem('theme') === 'dark') { document.documentElement.classList.add('dark'); document.getElementById('darkIcon').innerText = '☀️'; }
+    window.filterCourses = function(category, btn) { const container = btn.parentElement; const allButtons = container.querySelectorAll('button'); allButtons.forEach(b => { b.classList.remove('bg-blue-600', 'text-white', 'border-blue-600', 'shadow-lg', 'scale-105'); b.classList.add('bg-white', 'text-gray-600', 'border-gray-100'); }); btn.classList.add('bg-blue-600', 'text-white', 'border-blue-600', 'shadow-lg', 'scale-105'); btn.classList.remove('bg-white', 'text-gray-600', 'border-gray-100'); console.log("Showing courses for: " + category); };
+    window.handleSearch = function(query) { console.log("Searching for: " + query); const dropdown = document.getElementById('searchResultsDropdown'); if (query.length > 2) dropdown.classList.remove('hidden'); else dropdown.classList.add('hidden'); };
+    window.updateDailyGoal = function(completed, total) { const percentage = (completed / total) * 100; const progressBar = document.querySelector('.bg-gradient-to-r'); const progressText = document.querySelector('.text-blue-600'); if(progressBar && progressText) { progressBar.style.width = percentage + '%'; progressText.innerText = completed; } if(completed === total) alert("🎉 Congratulations! Daily Goal Achieved!"); };
+    window.openDynamicQuiz = function() { const btn = document.getElementById('deadlineActionBtn'); if (btn && btn.onclick) btn.onclick(); else alert("No pending quiz or exam. Great job!"); };
+    
+    let posts = [{ user: "Munesh", query: "Node.js 404 Error help please!", time: "2m ago", color: "blue" }, { user: "Teerath", query: "Who wants to collaborate on the InfoSec project?", time: "1h ago", color: "purple" }, { user: "Sana", query: "React Native navigation is so smooth! 😍", time: "3h ago", color: "green" }, { user: "Ali", query: "How to use MongoDB with Replit?", time: "5h ago", color: "amber" }, { user: "Attique", query: "Submission deadline is tomorrow, don't forget!", time: "Yesterday", color: "red" }];
+    let showAll = false;
+    function renderPosts() { const container = document.getElementById('communityContainer'); const showAllBtn = document.getElementById('showAllBtn'); container.innerHTML = ''; const visiblePosts = showAll ? posts : posts.slice(0, 3); visiblePosts.forEach((post) => { container.innerHTML += `<div class="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-2xl transition-all border-b border-gray-50 last:border-0"><div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-600 text-xs shadow-sm">${post.user.charAt(0)}</div><div class="flex-1"><p class="text-sm font-bold text-gray-800">${post.user}</p><p class="text-xs text-gray-600 mt-1 leading-relaxed">${post.query}</p><div class="flex items-center gap-3 mt-2 text-[10px] text-gray-400 font-medium uppercase tracking-tighter"><span>${post.time}</span><span class="text-blue-500 cursor-pointer hover:underline">Reply</span></div></div></div>`; }); if (posts.length > 3) { showAllBtn.classList.remove('hidden'); showAllBtn.innerText = showAll ? "Show Less" : `View More (${posts.length - 3} more)`; } else { showAllBtn.classList.add('hidden'); } }
+    window.addPost = function() { const input = document.getElementById('postInput'); const text = input.value.trim(); if (text === "") return; const newPost = { user: user.name || "Munesh", query: text, time: "Just now", color: "blue" }; posts.unshift(newPost); input.value = ""; renderPosts(); };
+    window.toggleFeeds = function() { showAll = !showAll; renderPosts(); };
+    document.addEventListener('DOMContentLoaded', renderPosts);
+    window.showRecentAchievement = function(quizName, instructor, points) { const bar = document.getElementById('achievementBar'); const text = document.getElementById('achievementText'); if (bar && text) { text.innerHTML = `🎉 <b>${firstName}</b>, you just earned <b>${points} points</b> for passing the <u>${quizName}</u> quiz by Instructor <b>${instructor}</b>!`; bar.classList.remove('hidden'); setTimeout(() => { closeAchievement(); }, 15000); } };
+    window.closeAchievement = function() { const bar = document.getElementById('achievementBar'); if (bar) bar.classList.add('hidden'); };
+</script>
+<script src="/hook/chatboat/chatboat-widget.js"></script>
+</body>
+</html>

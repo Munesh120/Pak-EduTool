@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Pak eduTool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .stat-card { transition: all 0.3s ease; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .delete-btn { cursor: pointer; color: #ef4444; margin-left: 8px; font-size: 0.7rem; }
+        .delete-btn:hover { color: #dc2626; }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+<nav class="bg-white shadow-md fixed w-full top-0 z-50">
+    <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <span class="text-2xl">👑</span>
+            <span class="text-xl font-bold text-blue-900">Admin Panel</span>
+        </div>
+        <div class="flex items-center space-x-4">
+            <span id="adminName" class="text-gray-700">Admin</span>
+            <button onclick="logout()" class="text-red-600 text-sm">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<div class="pt-20 container mx-auto px-6 py-8">
+    <!-- Stats Cards -->
+    <div class="grid md:grid-cols-5 gap-6 mb-8">
+        <div class="stat-card bg-white rounded-xl p-5 shadow-md">
+            <div class="flex items-center justify-between">
+                <i class="fas fa-chalkboard-user text-3xl text-blue-600"></i>
+                <div class="text-right"><span class="text-2xl font-bold" id="totalCourses">0</span><br>Total Published</div>
+            </div>
+        </div>
+        <div class="stat-card bg-white rounded-xl p-5 shadow-md">
+            <div class="flex items-center justify-between">
+                <i class="fas fa-users text-3xl text-green-600"></i>
+                <div class="text-right"><span class="text-2xl font-bold" id="totalStudents">0</span><br>Students</div>
+            </div>
+        </div>
+        <div class="stat-card bg-white rounded-xl p-5 shadow-md">
+            <div class="flex items-center justify-between">
+                <i class="fas fa-chalkboard text-3xl text-purple-600"></i>
+                <div class="text-right"><span class="text-2xl font-bold" id="totalInstructors">0</span><br>Instructors</div>
+            </div>
+        </div>
+        <div class="stat-card bg-white rounded-xl p-5 shadow-md">
+            <div class="flex items-center justify-between">
+                <i class="fas fa-dollar-sign text-3xl text-yellow-600"></i>
+                <div class="text-right"><span class="text-2xl font-bold" id="totalRevenue">PKR 0</span><br>Revenue</div>
+            </div>
+        </div>
+        <div class="stat-card bg-white rounded-xl p-5 shadow-md">
+            <div class="flex items-center justify-between">
+                <i class="fas fa-graduation-cap text-3xl text-red-600"></i>
+                <div class="text-right"><span class="text-2xl font-bold" id="totalEnrollments">0</span><br>Total Enrollments</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+        <div class="border-b">
+            <div class="flex flex-wrap">
+                <button onclick="showTab('instructors')" id="tabInstructorsBtn" class="px-6 py-3 text-gray-700 font-semibold border-b-2 border-blue-600">Instructors (<span id="pendingInstructorsCount">0</span> pending)</button>
+                <button onclick="showTab('students')" id="tabStudentsBtn" class="px-6 py-3 text-gray-500 font-semibold">Students</button>
+                <button onclick="showTab('courses')" id="tabCoursesBtn" class="px-6 py-3 text-gray-500 font-semibold">Pending Courses (<span id="pendingCoursesCount">0</span>)</button>
+                <button onclick="showTab('published')" id="tabPublishedBtn" class="px-6 py-3 text-gray-500 font-semibold">Published Courses</button>
+                <button onclick="showTab('transactions')" id="tabTransactionsBtn" class="px-6 py-3 text-gray-500 font-semibold">Transactions</button>
+                <button onclick="showTab('enrollments')" id="tabEnrollmentsBtn" class="px-6 py-3 text-gray-500 font-semibold">All Enrollments</button>
+            </div>
+        </div>
+
+        <!-- Instructors Tab -->
+        <div id="instructorsTab" class="p-6">
+            <h3 class="text-lg font-bold mb-3">All Instructors & Their Courses</h3>
+            <div id="instructorsList" class="space-y-4"></div>
+            <h3 class="text-lg font-bold mt-6 mb-3">Pending Instructor Approvals</h3>
+            <div id="pendingInstructorsList" class="space-y-3"></div>
+        </div>
+
+        <!-- Students Tab -->
+        <div id="studentsTab" class="p-6 hidden">
+            <h3 class="text-lg font-bold mb-3">All Students & Enrolled Courses</h3>
+            <div id="studentsList" class="space-y-4"></div>
+        </div>
+
+        <!-- Pending Courses Tab -->
+        <div id="coursesTab" class="p-6 hidden">
+            <div id="pendingCoursesList" class="space-y-3"></div>
+        </div>
+
+        <!-- Published Courses Tab -->
+        <div id="publishedTab" class="p-6 hidden">
+            <div id="publishedCoursesList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+
+        <!-- Transactions Tab -->
+        <div id="transactionsTab" class="p-6 hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead><tr class="border-b"><th>Course</th><th>Student</th><th>Instructor</th><th>Amount</th><th>Admin</th><th>Instructor</th><th>Date</th></tr></thead>
+                    <tbody id="transactionsList"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Enrollments Tab -->
+        <div id="enrollmentsTab" class="p-6 hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead><tr class="border-b"><th>Course</th><th>Student</th><th>Enrolled Date</th><th>Payment Status</th></tr></thead>
+                    <tbody id="enrollmentsList"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Course Details Modal -->
+<div id="courseDetailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+    <div class="bg-white rounded-xl p-6 w-full max-w-4xl mx-auto my-8">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold" id="detailsCourseTitle"></h2>
+            <button onclick="closeDetailsModal()" class="text-gray-500 text-2xl">&times;</button>
+        </div>
+        <div id="courseDetailsContent" class="space-y-4 max-h-96 overflow-y-auto"></div>
+        <div class="mt-4 text-right">
+            <button onclick="closeDetailsModal()" class="bg-gray-300 px-4 py-2 rounded">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Course Modal -->
+<div id="editCourseModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 w-full max-w-md">
+        <h2 class="text-xl font-bold mb-4">Update Course</h2>
+        <input type="hidden" id="editCourseId">
+        <input type="text" id="editTitle" placeholder="Title" class="w-full mb-3 p-2 border rounded">
+        <textarea id="editDesc" placeholder="Description" class="w-full mb-3 p-2 border rounded" rows="3"></textarea>
+        <input type="number" id="editPrice" placeholder="Price" class="w-full mb-3 p-2 border rounded">
+        <select id="editStatus" class="w-full mb-3 p-2 border rounded">
+            <option value="pending">Pending</option><option value="published">Published</option><option value="rejected">Rejected</option>
+        </select>
+        <div class="flex gap-3">
+            <button onclick="updateCourse()" class="flex-1 bg-blue-600 text-white py-2 rounded">Save Changes</button>
+            <button onclick="closeEditModal()" class="flex-1 bg-gray-300 py-2 rounded">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE = 'http://localhost:5000';
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    if (!token || user.role !== 'admin') {
+        alert('Admin access only');
+        window.location.href = 'login.html';
+    }
+    document.getElementById('adminName').innerText = user.name || 'Admin';
+
+    async function apiCall(url, method, body = null) {
+        const opts = { method, headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch(`${API_BASE}${url}`, opts);
+        if (!res.ok) throw new Error(await res.text());
+        return res.json();
+    }
+
+    async function loadStats() {
+        try {
+            const coursesRes = await fetch(`${API_BASE}/api/courses`);
+            const coursesData = await coursesRes.json();
+            document.getElementById('totalCourses').innerText = coursesData.data?.length || 0;
+            const users = await apiCall('/api/admin/users', 'GET');
+            document.getElementById('totalStudents').innerText = users.filter(u => u.role === 'student').length;
+            document.getElementById('totalInstructors').innerText = users.filter(u => u.role === 'instructor').length;
+            const transactions = await apiCall('/api/admin/transactions', 'GET');
+            const totalRev = transactions.reduce((sum, t) => sum + t.amount, 0);
+            document.getElementById('totalRevenue').innerText = `PKR ${totalRev}`;
+            document.getElementById('totalEnrollments').innerText = transactions.length;
+        } catch (err) { console.error(err); }
+    }
+
+    // Instructors tab – fetch courses directly by instructor ID
+    async function loadAllInstructors() {
+        try {
+            const allUsers = await apiCall('/api/admin/users', 'GET');
+            const instructors = allUsers.filter(u => u.role === 'instructor');
+            const pending = instructors.filter(i => !i.isApprovedInstructor);
+            const approved = instructors.filter(i => i.isApprovedInstructor);
+            document.getElementById('pendingInstructorsCount').innerText = pending.length;
+
+            const container = document.getElementById('instructorsList');
+            if (approved.length === 0) {
+                container.innerHTML = '<div class="text-gray-500">No approved instructors yet.</div>';
+            } else {
+                let instructorsHtml = '';
+                for (const inst of approved) {
+                    // Fetch courses for this instructor using admin endpoint that returns all courses filtered by instructorId
+                    const allCourses = await fetch(`${API_BASE}/api/courses?instructor=${inst._id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }).then(res => res.json()).catch(() => ({ data: [] }));
+                    const myCourses = (allCourses.data || []).filter(c => c.instructorId?._id === inst._id || c.instructorId === inst._id);
+                    const courseList = myCourses.map(c => `<span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-1 mb-1">${escapeHtml(c.title)}</span>`).join('');
+                    instructorsHtml += `
+                        <div class="border rounded-lg p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-bold">${escapeHtml(inst.name)}</p>
+                                    <p class="text-sm text-gray-600">${inst.email}</p>
+                                    <p class="text-xs text-green-600">Approved</p>
+                                </div>
+                                <div class="text-sm">Total Courses: ${myCourses.length}</div>
+                            </div>
+                            <div class="mt-2"><strong>Courses:</strong> <div class="flex flex-wrap mt-1">${courseList || 'No courses yet'}</div></div>
+                        </div>
+                    `;
+                }
+                container.innerHTML = instructorsHtml;
+            }
+
+            const pendingContainer = document.getElementById('pendingInstructorsList');
+            if (pending.length === 0) {
+                pendingContainer.innerHTML = '<div class="text-gray-500">No pending instructor requests.</div>';
+                return;
+            }
+            pendingContainer.innerHTML = pending.map(inst => `
+                <div class="border rounded-lg p-4 flex justify-between items-center">
+                    <div><p class="font-bold">${inst.name}</p><p class="text-sm text-gray-600">${inst.email}</p></div>
+                    <button onclick="approveInstructor('${inst._id}')" class="bg-green-600 text-white px-4 py-2 rounded">Approve</button>
+                </div>
+            `).join('');
+        } catch (err) { console.error(err); }
+    }
+
+    async function approveInstructor(id) {
+        await apiCall(`/api/admin/approve-instructor/${id}`, 'PUT');
+        alert('Instructor approved');
+        loadAllInstructors();
+        loadStats();
+    }
+
+    // Students tab
+    async function loadAllStudents() {
+        try {
+            const allUsers = await apiCall('/api/admin/users', 'GET');
+            const students = allUsers.filter(u => u.role === 'student');
+            const transactions = await apiCall('/api/admin/transactions', 'GET');
+            const container = document.getElementById('studentsList');
+            if (students.length === 0) {
+                container.innerHTML = '<div class="text-gray-500">No students yet.</div>';
+                return;
+            }
+            let studentsHtml = '';
+            for (const student of students) {
+                const userTransactions = transactions.filter(t => t.studentId?._id === student._id);
+                const courses = userTransactions.map(t => `<span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded mr-1 mb-1">${escapeHtml(t.courseId?.title || 'Unknown')}</span>`).join('');
+                studentsHtml += `
+                    <div class="border rounded-lg p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-bold">${escapeHtml(student.name)}</p>
+                                <p class="text-sm text-gray-600">${student.email}</p>
+                            </div>
+                            <div class="text-sm">Enrolled: ${userTransactions.length} courses</div>
+                        </div>
+                        <div class="mt-2"><strong>Enrolled Courses:</strong> <div class="flex flex-wrap mt-1">${courses || 'No enrollments'}</div></div>
+                    </div>
+                `;
+            }
+            container.innerHTML = studentsHtml;
+        } catch (err) { console.error(err); }
+    }
+
+    // Pending courses (unchanged)
+    async function loadPendingCourses() {
+        try {
+            const courses = await apiCall('/api/admin/pending-courses', 'GET');
+            document.getElementById('pendingCoursesCount').innerText = courses.length;
+            const container = document.getElementById('pendingCoursesList');
+            if (!courses.length) {
+                container.innerHTML = '<div class="text-gray-500">No pending courses.</div>';
+                return;
+            }
+            container.innerHTML = courses.map(c => `
+                <div class="border rounded-lg p-4">
+                    <div class="flex flex-wrap justify-between items-start gap-2">
+                        <div class="flex-1">
+                            <h3 class="font-bold">${escapeHtml(c.title)}</h3>
+                            <p class="text-sm text-gray-600">${escapeHtml(c.description.substring(0, 150))}</p>
+                            <p class="text-xs text-gray-400">By: ${c.instructorId?.name || 'Unknown'} | Price: PKR ${c.price}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="viewCourseDetails('${c._id}', true)" class="bg-purple-600 text-white px-3 py-1 rounded">Check</button>
+                            <button onclick="approveCourse('${c._id}')" class="bg-green-600 text-white px-3 py-1 rounded">Approve</button>
+                            <button onclick="rejectCourse('${c._id}')" class="bg-red-600 text-white px-3 py-1 rounded">Reject</button>
+                            <button onclick="editCourse('${c._id}', '${escapeHtml(c.title)}', '${escapeHtml(c.description).replace(/'/g, "\\'")}', ${c.price}, '${c.status}')" class="bg-blue-600 text-white px-3 py-1 rounded">Edit</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } catch (err) { console.error(err); }
+    }
+
+    async function approveCourse(id) { await apiCall(`/api/admin/approve-course/${id}`, 'PUT'); alert('Course published'); loadPendingCourses(); loadPublishedCourses(); loadStats(); }
+    async function rejectCourse(id) { await apiCall(`/api/admin/reject-course/${id}`, 'PUT'); alert('Course rejected'); loadPendingCourses(); }
+
+    // Published courses with Delete button
+    async function loadPublishedCourses() {
+        const res = await fetch(`${API_BASE}/api/courses`);
+        const data = await res.json();
+        const courses = data.data || [];
+        const container = document.getElementById('publishedCoursesList');
+        if (!courses.length) {
+            container.innerHTML = '<div class="col-span-full text-gray-500">No published courses.</div>';
+            return;
+        }
+        const enrollments = await apiCall('/api/admin/transactions', 'GET');
+        container.innerHTML = courses.map(c => {
+            const enrolledCount = enrollments.filter(e => e.courseId?._id === c._id).length;
+            return `
+                <div class="border rounded-xl p-4 bg-white shadow">
+                    <div class="flex justify-between items-start">
+                        <h3 class="font-bold">${escapeHtml(c.title)}</h3>
+                        <button onclick="deleteCourse('${c._id}')" class="text-red-600 hover:text-red-800 text-sm"><i class="fas fa-trash-alt"></i> Delete</button>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-1">${escapeHtml(c.description.substring(0, 80))}</p>
+                    <div class="flex justify-between mt-2"><span class="text-xs">${c.level}</span><span class="font-bold">PKR ${c.price}</span></div>
+                    <div class="mt-2 text-xs text-gray-500"><i class="fas fa-users"></i> ${enrolledCount} students enrolled</div>
+                    <div class="mt-3 flex gap-2">
+                        <button onclick="viewCourseDetails('${c._id}', false)" class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">Check</button>
+                        <button onclick="editCourse('${c._id}', '${escapeHtml(c.title)}', '${escapeHtml(c.description).replace(/'/g, "\\'")}', ${c.price}, '${c.status}')" class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">Edit</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Delete course function
+    async function deleteCourse(courseId) {
+        if (!confirm('Are you sure you want to permanently delete this course? This action cannot be undone.')) return;
+        try {
+            const res = await fetch(`${API_BASE}/api/admin/courses/${courseId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                alert('Course deleted successfully');
+                loadPublishedCourses();
+                loadStats();
+            } else {
+                const err = await res.json();
+                alert('Delete failed: ' + (err.error || 'Unknown error. Backend DELETE endpoint missing.'));
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    }
+
+    // Transactions & Enrollments
+    async function loadTransactions() {
+        const transactions = await apiCall('/api/admin/transactions', 'GET');
+        const tbody = document.getElementById('transactionsList');
+        if (!transactions.length) { tbody.innerHTML = '<tr><td colspan="7" class="text-center">No transactions</td></tr>'; return; }
+        tbody.innerHTML = transactions.map(t => `
+            <tr class="border-b">
+                <td class="py-2">${t.courseId?.title || '-'}</td>
+                <td>${t.studentId?.name || '-'}</td>
+                <td>${t.instructorId?.name || '-'}</td>
+                <td>PKR ${t.amount}</td>
+                <td>PKR ${t.adminCut}</td>
+                <td>PKR ${t.instructorCut}</td>
+                <td>${new Date(t.createdAt).toLocaleDateString()}</td>
+            </tr>
+        `).join('');
+    }
+
+    async function loadEnrollments() {
+        const transactions = await apiCall('/api/admin/transactions', 'GET');
+        const tbody = document.getElementById('enrollmentsList');
+        if (!transactions.length) { tbody.innerHTML = '<tr><td colspan="4" class="text-center">No enrollments</td></tr>'; return; }
+        tbody.innerHTML = transactions.map(e => `
+            <tr class="border-b">
+                <td>${e.courseId?.title || '-'}</td>
+                <td>${e.studentId?.name || '-'}</td>
+                <td>${new Date(e.createdAt).toLocaleDateString()}</td>
+                <td><span class="text-green-600">Completed</span></td>
+            </tr>
+        `).join('');
+    }
+
+    // Course details modal with delete buttons for modules/lessons
+    async function viewCourseDetails(courseId, isPending = false) {
+        try {
+            const res = await fetch(`${API_BASE}/api/courses/${courseId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const course = data.data;
+            document.getElementById('detailsCourseTitle').innerText = course.title;
+            let content = `<div class="mb-4"><p>${escapeHtml(course.description)}</p><p>Price: PKR ${course.price} | Level: ${course.level}</p></div>`;
+            if (course.modules && course.modules.length) {
+                course.modules.forEach((mod, mIdx) => {
+                    content += `<div class="border rounded-lg p-3 mb-3">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-lg">Module ${mIdx+1}: ${escapeHtml(mod.title)}</h3>
+                            <button onclick="deleteModule('${courseId}', ${mIdx})" class="text-red-600 text-sm"><i class="fas fa-trash-alt"></i> Delete Module</button>
+                        </div>`;
+                    if (mod.lessons && mod.lessons.length) {
+                        content += `<ul class="ml-6 space-y-2 mt-2">`;
+                        mod.lessons.forEach((lesson, lIdx) => {
+                            content += `<li class="border-b pb-1 flex justify-between items-center">
+                                <div><i class="fas fa-play-circle text-blue-500"></i> <strong>${escapeHtml(lesson.title)}</strong>
+                                ${lesson.videoUrl ? '<span class="text-xs text-green-600">(video)</span>' : ''}
+                                ${lesson.notes ? '<span class="text-xs text-gray-500">(notes)</span>' : ''}
+                                ${lesson.quiz && lesson.quiz.length ? `<span class="text-xs text-purple-600">(quiz: ${lesson.quiz.length} questions)</span>` : ''}
+                                </div>
+                                <button onclick="deleteLesson('${courseId}', ${mIdx}, ${lIdx})" class="text-red-600 text-xs"><i class="fas fa-trash-alt"></i> Delete</button>
+                            </li>`;
+                        });
+                        content += `</ul>`;
+                    } else {
+                        content += `<p class="text-gray-400 text-sm ml-6">No lessons in this module.</p>`;
+                    }
+                    content += `</div>`;
+                });
+            } else {
+                content += `<p class="text-gray-500">No modules added yet.</p>`;
+            }
+            if (course.finalExam && course.finalExam.length) {
+                content += `<div class="mt-4 p-3 bg-yellow-50 rounded"><strong>Final Exam:</strong> ${course.finalExam.length} questions.</div>`;
+            }
+            document.getElementById('courseDetailsContent').innerHTML = content;
+            document.getElementById('courseDetailsModal').classList.remove('hidden');
+        } catch (err) { alert('Could not load course details'); }
+    }
+
+    async function deleteModule(courseId, moduleIndex) {
+        if (!confirm('Delete this module and all its lessons?')) return;
+        try {
+            const res = await fetch(`${API_BASE}/api/admin/courses/${courseId}/modules/${moduleIndex}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                alert('Module deleted');
+                closeDetailsModal();
+                loadPendingCourses();
+                loadPublishedCourses();
+            } else { alert('Delete failed: Backend endpoint missing.'); }
+        } catch (err) { alert('Error: ' + err.message); }
+    }
+
+    async function deleteLesson(courseId, moduleIndex, lessonIndex) {
+        if (!confirm('Delete this lesson?')) return;
+        try {
+            const res = await fetch(`${API_BASE}/api/admin/courses/${courseId}/modules/${moduleIndex}/lessons/${lessonIndex}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                alert('Lesson deleted');
+                closeDetailsModal();
+                loadPendingCourses();
+                loadPublishedCourses();
+            } else { alert('Delete failed: Backend endpoint missing.'); }
+        } catch (err) { alert('Error: ' + err.message); }
+    }
+
+    function closeDetailsModal() { document.getElementById('courseDetailsModal').classList.add('hidden'); }
+
+    // Edit course functions
+    let currentEditId = null;
+    function editCourse(id, title, desc, price, status) {
+        currentEditId = id;
+        document.getElementById('editCourseId').value = id;
+        document.getElementById('editTitle').value = title;
+        document.getElementById('editDesc').value = desc;
+        document.getElementById('editPrice').value = price;
+        document.getElementById('editStatus').value = status;
+        document.getElementById('editCourseModal').classList.remove('hidden');
+    }
+
+    async function updateCourse() {
+        const id = document.getElementById('editCourseId').value;
+        const title = document.getElementById('editTitle').value;
+        const description = document.getElementById('editDesc').value;
+        const price = parseInt(document.getElementById('editPrice').value);
+        const status = document.getElementById('editStatus').value;
+        try {
+            const res = await fetch(`${API_BASE}/api/courses/${id}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, description, price, status })
+            });
+            if (res.ok) {
+                alert('Course updated');
+                closeEditModal();
+                loadPendingCourses();
+                loadPublishedCourses();
+                loadStats();
+            } else {
+                const error = await res.json();
+                alert('Error: ' + (error.error || 'Unknown'));
+            }
+        } catch (err) { alert('Update failed'); }
+    }
+
+    function closeEditModal() { document.getElementById('editCourseModal').classList.add('hidden'); }
+
+    // Tab switching (robust)
+    function showTab(tab) {
+        const tabIds = ['instructors', 'students', 'courses', 'published', 'transactions', 'enrollments'];
+        tabIds.forEach(t => {
+            const element = document.getElementById(`${t}Tab`);
+            if (element) element.classList.add('hidden');
+            const btn = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}Btn`);
+            if (btn) {
+                btn.classList.remove('border-blue-600', 'text-gray-700');
+                btn.classList.add('text-gray-500');
+            }
+        });
+        const activeTabDiv = document.getElementById(`${tab}Tab`);
+        if (activeTabDiv) activeTabDiv.classList.remove('hidden');
+        const activeBtn = document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}Btn`);
+        if (activeBtn) {
+            activeBtn.classList.add('border-blue-600', 'text-gray-700');
+            activeBtn.classList.remove('text-gray-500');
+        }
+        if (tab === 'instructors') loadAllInstructors();
+        if (tab === 'students') loadAllStudents();
+        if (tab === 'courses') loadPendingCourses();
+        if (tab === 'published') loadPublishedCourses();
+        if (tab === 'transactions') loadTransactions();
+        if (tab === 'enrollments') loadEnrollments();
+    }
+
+    function logout() { localStorage.clear(); window.location.href = 'login.html'; }
+    function escapeHtml(str) { return str ? str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;') : ''; }
+
+    // Initial load
+    loadStats();
+    loadAllInstructors();
+    loadAllStudents();
+    loadPendingCourses();
+    loadPublishedCourses();
+    loadTransactions();
+    loadEnrollments();
+</script>
+    <footer class="bg-gray-900 text-white pt-16 pb-8">
+    <div class="container mx-auto px-6">
+        <div class="grid md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
+            <div><h3 class="font-bold text-lg mb-4 flex items-center"><span class="text-2xl mr-2">🎓</span> Pak eduToll</h3><ul class="space-y-2 text-sm text-gray-400"><li><a href="#" class="hover:text-white">About</a></li><li><a href="#" class="hover:text-white">What We Offer</a></li><li><a href="#" class="hover:text-white">Leadership</a></li><li><a href="#" class="hover:text-white">Careers</a></li><li><a href="#" class="hover:text-white">Catalog</a></li></ul></div>
+            <div><h3 class="font-bold text-lg mb-4">Programs</h3><ul class="space-y-2 text-sm text-gray-400"><li><a href="#" class="hover:text-white">EdTech Plus</a></li><li><a href="#" class="hover:text-white">Professional Certificates</a></li><li><a href="#" class="hover:text-white">MasterTrack® Certificates</a></li><li><a href="#" class="hover:text-white">Degrees</a></li><li><a href="#" class="hover:text-white">For Enterprise</a></li></ul></div>
+            <div><h3 class="font-bold text-lg mb-4">For Partners</h3><ul class="space-y-2 text-sm text-gray-400"><li><a href="#" class="hover:text-white">For Government</a></li><li><a href="#" class="hover:text-white">For Campus</a></li><li><a href="#" class="hover:text-white">Become a Partner</a></li><li><a href="#" class="hover:text-white">Social Impact</a></li><li><a href="#" class="hover:text-white">Community</a></li></ul></div>
+            <div><h3 class="font-bold text-lg mb-4">Resources</h3><ul class="space-y-2 text-sm text-gray-400"><li><a href="#" class="hover:text-white">Learners</a></li><li><a href="#" class="hover:text-white">Partners</a></li><li><a href="#" class="hover:text-white">Beta Testers</a></li><li><a href="#" class="hover:text-white">Blog</a></li><li><a href="#" class="hover:text-white">Tech Blog</a></li></ul></div>
+            <div><h3 class="font-bold text-lg mb-4">Support</h3><ul class="space-y-2 text-sm text-gray-400"><li><a href="#" class="hover:text-white">Help Center</a></li><li><a href="#" class="hover:text-white">Contact Us</a></li><li><a href="#" class="hover:text-white">Accessibility</a></li><li><a href="#" class="hover:text-white">Terms & Privacy</a></li><li><a href="#" class="hover:text-white">Cookies Preference</a></li></ul></div>
+        </div>
+        <div class="flex justify-center space-x-6 py-6 border-t border-gray-800"><a href="#" class="text-gray-400 hover:text-white text-xl"><i class="fab fa-facebook"></i></a><a href="#" class="text-gray-400 hover:text-white text-xl"><i class="fab fa-twitter"></i></a><a href="#" class="text-gray-400 hover:text-white text-xl"><i class="fab fa-linkedin"></i></a><a href="#" class="text-gray-400 hover:text-white text-xl"><i class="fab fa-youtube"></i></a><a href="#" class="text-gray-400 hover:text-white text-xl"><i class="fab fa-instagram"></i></a></div>
+        <div class="flex justify-center space-x-4 py-4 border-t border-gray-800"><a href="#" class="flex items-center space-x-2 bg-gray-800 px-4 py-2 rounded-lg hover:bg-gray-700"><i class="fab fa-apple text-xl"></i><div><p class="text-xs">Download on the</p><p class="text-sm font-semibold">App Store</p></div></a><a href="#" class="flex items-center space-x-2 bg-gray-800 px-4 py-2 rounded-lg hover:bg-gray-700"><i class="fab fa-android text-xl"></i><div><p class="text-xs">Get it on</p><p class="text-sm font-semibold">Google Play</p></div></a></div>
+        <div class="text-center pt-6 border-t border-gray-800"><div class="flex justify-center items-center space-x-2 mb-3"><span class="text-2xl">🎓</span><span class="font-bold">Pak eduToll</span><span class="text-sm text-green-400 ml-2">Certified B Corporation</span></div><p class="text-sm text-gray-500">© 2026 Pak eduToll Inc. All rights reserved.</p><p class="text-xs text-gray-600 mt-2">Empowering education across Pakistan | HEC Recognized | PITB Partner</p></div>
+    </div>
+</footer>
+</body>
+</html>

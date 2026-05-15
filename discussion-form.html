@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discussion Forum - Pak eduTool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); }
+        .reply-box { transition: all 0.2s; }
+        .reply-box:hover { background-color: #f9fafb; }
+        .modal { transition: opacity 0.3s ease; }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<!-- Navigation -->
+<nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+    <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+        <a href="#" class="flex items-center space-x-2">
+            <span class="text-2xl">🎓</span>
+            <span class="text-xl font-bold text-blue-900">Pak eduTool Forum</span>
+        </a>
+        <div class="space-x-4 flex items-center">
+            <span id="userDisplay" class="text-sm text-gray-600"></span>
+            <button onclick="showCreateModal()" class="bg-blue-600 text-white px-4 py-1 rounded-lg text-sm hover:bg-blue-700">+ New Discussion</button>
+            <a href="student-dashboard.html" class="text-gray-600 hover:text-blue-600 text-sm">← Dashboard</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Container -->
+<div class="pt-20 container mx-auto px-6 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar: All Discussions (sorted newest first) -->
+        <div class="lg:w-1/3 bg-white rounded-xl shadow-md p-4 h-fit">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">📌 All Discussions</h2>
+                <span id="discussionCount" class="text-sm text-gray-500"></span>
+            </div>
+            <div id="discussionList" class="space-y-3 max-h-[70vh] overflow-y-auto pr-2"></div>
+        </div>
+
+        <!-- Main Area: Selected Discussion + Replies -->
+        <div class="lg:w-2/3" id="mainArea">
+            <div class="bg-white rounded-xl shadow-md p-6 text-center text-gray-500">
+                <i class="fas fa-comments text-4xl mb-3"></i>
+                <p>Select a discussion from the left to view details and replies.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Create New Discussion -->
+<div id="createModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center modal">
+    <div class="bg-white rounded-xl p-6 w-full max-w-lg mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold">Start New Discussion</h2>
+            <button onclick="closeCreateModal()" class="text-gray-500 text-2xl">&times;</button>
+        </div>
+        <input type="text" id="newTitle" placeholder="Discussion Title" class="w-full p-2 border rounded mb-3">
+        <select id="newCategory" class="w-full p-2 border rounded mb-3">
+            <option value="General">General</option>
+            <option value="Technical">Technical</option>
+            <option value="Assignment">Assignment</option>
+            <option value="Exam">Exam</option>
+            <option value="Career">Career</option>
+        </select>
+        <textarea id="newContent" rows="4" placeholder="Write your question or doubt in detail..." class="w-full p-2 border rounded mb-4"></textarea>
+        <div class="flex gap-3">
+            <button onclick="createDiscussion()" class="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Post Discussion</button>
+            <button onclick="closeCreateModal()" class="flex-1 bg-gray-200 py-2 rounded">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- DATA MODEL ----------
+    let discussions = [];
+    let currentDiscussionId = null;
+
+    // Get logged-in user from your main app's localStorage
+    let user = {};
+    try {
+        const storedUser = localStorage.getItem('pakEdutollUser') || localStorage.getItem('user');
+        if (storedUser) user = JSON.parse(storedUser);
+    } catch(e) { console.warn(e); }
+
+    const currentUser = {
+        name: user.name || user.fullName || user.displayName || 'Student',
+        id: user.id || user._id || 'student_' + Date.now(),
+        isLoggedIn: true   // assume logged in when viewing this page
+    };
+
+    // Helper: get current timestamp (YYYY-MM-DD HH:MM:SS)
+    function getCurrentTimestamp() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+
+    // Format timestamp to readable string: "Apr 15, 2025 at 2:30 PM"
+    function formatTimestamp(timestamp) {
+        if (!timestamp) return 'Just now';
+        const date = new Date(timestamp);
+        if (isNaN(date.getTime())) return timestamp;
+        return date.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+
+    // Load or initialize data (sorted by newest first)
+    function loadDiscussions() {
+        const stored = localStorage.getItem('pakEduForum_discussions');
+        if (stored) {
+            discussions = JSON.parse(stored);
+        } else {
+            // Sample data with full timestamps
+            discussions = [
+                {
+                    id: "disc1",
+                    title: "How to submit final project?",
+                    category: "Assignment",
+                    content: "I'm confused about the submission format for the final project. Should we upload a zip file or a GitHub link?",
+                    author: "Munesh",
+                    authorId: "user1",
+                    timestamp: "2025-04-10 14:23:00",
+                    isResolved: false,
+                    replies: [
+                        { author: "Teerath", authorId: "user2", content: "You can upload a zip file in the assignment section. Also provide the GitHub link in comments.", timestamp: "2025-04-11 09:15:00" },
+                        { author: "Instructor Attique", authorId: "inst1", content: "Both are accepted. Please ensure your README is clear.", timestamp: "2025-04-12 11:30:00" }
+                    ]
+                },
+                {
+                    id: "disc2",
+                    title: "React useEffect infinite loop",
+                    category: "Technical",
+                    content: "My useEffect keeps running infinitely even when dependencies are empty. What could be wrong?",
+                    author: "Ali",
+                    authorId: "user3",
+                    timestamp: "2025-04-09 18:45:00",
+                    isResolved: true,
+                    replies: [
+                        { author: "Sana", authorId: "user4", content: "Check if you are updating state inside useEffect that causes re-render.", timestamp: "2025-04-09 20:10:00" },
+                        { author: "Ali", authorId: "user3", content: "Thanks! That solved it.", timestamp: "2025-04-10 08:30:00" }
+                    ]
+                },
+                {
+                    id: "disc3",
+                    title: "When will the certificate be issued?",
+                    category: "Exam",
+                    content: "I completed all modules and final exam last week. How long does it take to receive the certificate?",
+                    author: "Fatima",
+                    authorId: "user5",
+                    timestamp: "2025-04-08 10:00:00",
+                    isResolved: false,
+                    replies: []
+                }
+            ];
+            // Sort discussions by timestamp descending (newest first)
+            discussions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            persistDiscussions();
+        }
+        renderDiscussionList();
+        if (currentDiscussionId && discussions.find(d => d.id === currentDiscussionId)) {
+            selectDiscussion(currentDiscussionId);
+        } else if (discussions.length > 0) {
+            selectDiscussion(discussions[0].id);
+        }
+    }
+
+    function persistDiscussions() {
+        localStorage.setItem('pakEduForum_discussions', JSON.stringify(discussions));
+    }
+
+    // Render left sidebar list (newest first)
+    function renderDiscussionList() {
+        const container = document.getElementById('discussionList');
+        const countSpan = document.getElementById('discussionCount');
+        if (!container) return;
+        if (discussions.length === 0) {
+            container.innerHTML = '<div class="text-center text-gray-400 py-8">No discussions yet. Start one!</div>';
+            if (countSpan) countSpan.innerText = '0';
+            return;
+        }
+        if (countSpan) countSpan.innerText = discussions.length;
+        container.innerHTML = discussions.map(d => `
+            <div onclick="selectDiscussion('${d.id}')" 
+                 class="discussion-item p-3 rounded-lg cursor-pointer transition-all ${currentDiscussionId === d.id ? 'bg-blue-50 border-l-4 border-blue-600' : 'hover:bg-gray-50 border border-gray-100'}">
+                <div class="flex justify-between items-start">
+                    <h3 class="font-semibold text-gray-800">${escapeHtml(d.title)}</h3>
+                    ${d.isResolved ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">✓ Resolved</span>' : ''}
+                </div>
+                <div class="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                    <span>${d.category}</span>
+                    <span>👤 ${escapeHtml(d.author)}</span>
+                    <span>💬 ${d.replies.length}</span>
+                </div>
+                <div class="text-xs text-gray-400 mt-1">${formatTimestamp(d.timestamp)}</div>
+            </div>
+        `).join('');
+    }
+
+    function selectDiscussion(id) {
+        const discussion = discussions.find(d => d.id === id);
+        if (!discussion) return;
+        currentDiscussionId = id;
+        renderDiscussionList();
+        renderMainArea(discussion);
+    }
+
+    function renderMainArea(disc) {
+        const main = document.getElementById('mainArea');
+        const canResolve = (currentUser.name === disc.author || currentUser.name === 'Instructor Attique');
+        main.innerHTML = `
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <div class="flex items-center gap-2 mb-3 flex-wrap">
+                    <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">${disc.category}</span>
+                    ${disc.isResolved ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">✓ Resolved</span>' : ''}
+                    ${!disc.isResolved && canResolve ? 
+                        `<button onclick="markResolved('${disc.id}')" class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded hover:bg-yellow-200">✔ Mark Resolved</button>` : ''}
+                </div>
+                <h1 class="text-2xl font-bold mb-3">${escapeHtml(disc.title)}</h1>
+                <p class="text-gray-700 mb-4 whitespace-pre-line">${escapeHtml(disc.content)}</p>
+                <div class="flex items-center justify-between text-sm text-gray-500">
+                    <div class="flex items-center space-x-2">
+                        <span>👤 ${escapeHtml(disc.author)}</span>
+                        <span>•</span>
+                        <span>📅 ${formatTimestamp(disc.timestamp)}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <h3 class="text-xl font-bold mb-4">💬 Replies (${disc.replies.length})</h3>
+            <div id="repliesContainer" class="space-y-4 mb-8"></div>
+            
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="font-bold mb-3">Your Reply</h3>
+                <textarea id="replyContent" rows="3" class="w-full px-4 py-2 border rounded-lg mb-3" placeholder="Write your reply..."></textarea>
+                <button onclick="submitReply('${disc.id}')" class="gradient-bg text-white px-6 py-2 rounded-lg hover:opacity-90">Post Reply</button>
+            </div>
+        `;
+        renderReplies(disc);
+    }
+
+    function renderReplies(disc) {
+        const container = document.getElementById('repliesContainer');
+        if (!container) return;
+        if (disc.replies.length === 0) {
+            container.innerHTML = '<div class="text-center py-8 text-gray-500">No replies yet. Be the first to respond!</div>';
+            return;
+        }
+        container.innerHTML = disc.replies.map(reply => `
+            <div class="reply-box bg-gray-50 rounded-lg p-4 border border-gray-100">
+                <div class="flex items-center space-x-2 mb-2">
+                    <span class="font-semibold">👤 ${escapeHtml(reply.author)}</span>
+                    <span class="text-xs text-gray-400">${formatTimestamp(reply.timestamp)}</span>
+                </div>
+                <p class="text-gray-700 whitespace-pre-line">${escapeHtml(reply.content)}</p>
+            </div>
+        `).join('');
+    }
+
+    function submitReply(discussionId) {
+        const content = document.getElementById('replyContent')?.value;
+        if (!content || !content.trim()) {
+            alert('Please enter a reply');
+            return;
+        }
+        const disc = discussions.find(d => d.id === discussionId);
+        if (!disc) return;
+        const newReply = {
+            author: currentUser.name,
+            authorId: currentUser.id,
+            content: content.trim(),
+            timestamp: getCurrentTimestamp()
+        };
+        disc.replies.push(newReply);
+        persistDiscussions();
+        renderMainArea(disc);
+        renderDiscussionList();
+        document.getElementById('replyContent').value = '';
+    }
+
+    function markResolved(discussionId) {
+        const disc = discussions.find(d => d.id === discussionId);
+        if (disc) {
+            disc.isResolved = true;
+            persistDiscussions();
+            renderMainArea(disc);
+            renderDiscussionList();
+        }
+    }
+
+    function createDiscussion() {
+        const title = document.getElementById('newTitle').value.trim();
+        const category = document.getElementById('newCategory').value;
+        const content = document.getElementById('newContent').value.trim();
+        if (!title) return alert('Title is required');
+        if (!content) return alert('Content is required');
+        
+        const newDisc = {
+            id: 'disc_' + Date.now(),
+            title: title,
+            category: category,
+            content: content,
+            author: currentUser.name,
+            authorId: currentUser.id,
+            timestamp: getCurrentTimestamp(),
+            isResolved: false,
+            replies: []
+        };
+        discussions.unshift(newDisc);  // add to top (newest first)
+        persistDiscussions();
+        closeCreateModal();
+        renderDiscussionList();
+        selectDiscussion(newDisc.id);
+        document.getElementById('newTitle').value = '';
+        document.getElementById('newContent').value = '';
+    }
+
+    function showCreateModal() {
+        document.getElementById('createModal').classList.remove('hidden');
+    }
+    function closeCreateModal() {
+        document.getElementById('createModal').classList.add('hidden');
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function init() {
+        const userDisplay = document.getElementById('userDisplay');
+        if (userDisplay && currentUser.name) {
+            userDisplay.innerHTML = `👋 ${escapeHtml(currentUser.name)}`;
+        }
+        loadDiscussions();
+    }
+
+    // Expose globally for inline onclick
+    window.selectDiscussion = selectDiscussion;
+    window.submitReply = submitReply;
+    window.markResolved = markResolved;
+    window.createDiscussion = createDiscussion;
+    window.showCreateModal = showCreateModal;
+    window.closeCreateModal = closeCreateModal;
+
+    init();
+</script>
+
+<!-- Footer -->
+<footer class="bg-gray-900 text-white mt-16 py-8 text-center text-sm">
+    <p>© 2026 Pak eduTool – Empowering Education</p>
+</footer>
+
+</body>
+</html>
