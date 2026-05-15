@@ -13,7 +13,11 @@ const app = express();
 const PORT = process.env.PORT || 5000; 
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/certificates', express.static(path.join(__dirname, 'certificates')));
@@ -22,10 +26,13 @@ app.use('/certificates', express.static(path.join(__dirname, 'certificates')));
 const dbURI = process.env.MONGO_URI || process.env.MONGODB_URI;
 
 mongoose.connect(dbURI)
-  .then(() => console.log('✅ Connected to MongoDB Atlas'))
+  .then(() => {
+    console.log('✅ Connected to MongoDB Atlas');
+    ensureAdmin();
+  })
   .catch(err => {
     console.error('❌ DB Connection Error:', err.message);
-    process.exit(1); 
+    // Let the process keep running — mongoose will retry the connection automatically
   });
 
 // --- MOVED THE LISTEN BLOCK TO THE BOTTOM ---

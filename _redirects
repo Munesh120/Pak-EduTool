@@ -1,0 +1,16 @@
+# Proxy all /api/* requests to the Railway backend (transparent to the browser)
+/api/*  https://pak-edutool-production.up.railway.app/api/:splat  200
+
+# Proxy uploaded file assets and mock-payment callback
+/uploads/*  https://pak-edutool-production.up.railway.app/uploads/:splat  200
+/mock-payment  https://pak-edutool-production.up.railway.app/mock-payment  200
+
+# Clean-URL aliases for each HTML page (optional convenience)
+/login              /login.html               200
+/register           /register.html            200
+/student-dashboard  /student-dashboard.html   200
+/admin-dashboard    /admin-dashboard.html     200
+/instructor-dashboard /instructor-dashboard.html 200
+
+# Fallback: serve index.html for any unmatched route (keeps navigation working)
+/*  /index.html  200

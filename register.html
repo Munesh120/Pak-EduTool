@@ -51,30 +51,47 @@
     </div>
     
     <script>
-        const API_BASE = 'http://localhost:5000';
-
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const role = document.getElementById('role').value;
+            const btn = e.target.querySelector('button[type="submit"]');
+
+            btn.disabled = true;
+            btn.textContent = 'Creating account…';
+
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 15000);
 
             try {
-                const res = await fetch('https://pak-edutool-production.up.railway.app/auth/register', {
+                const res = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password, role })
+                    body: JSON.stringify({ name, email, password, role }),
+                    signal: controller.signal
                 });
-                const data = await res.json();
+                clearTimeout(timer);
+
+                let data;
+                try { data = await res.json(); } catch { data = {}; }
+
                 if (res.ok) {
                     alert('Registration successful! Please login.');
                     window.location.href = 'login.html';
                 } else {
-                    alert(data.error || 'Registration failed');
+                    throw new Error(data.error || `Registration failed (${res.status})`);
                 }
             } catch (err) {
-                alert('Server error. Make sure backend is running on port 5001');
+                clearTimeout(timer);
+                const msg = err.name === 'AbortError'
+                    ? 'Request timed out — the server may be starting up. Please try again.'
+                    : err.message || 'Registration failed. Check your connection.';
+                console.error('[Register]', err);
+                alert(msg);
+                btn.disabled = false;
+                btn.textContent = 'Sign Up';
             }
         });
     </script>
